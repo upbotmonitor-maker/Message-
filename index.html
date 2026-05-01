@@ -1296,10 +1296,7 @@
       const cu = getCurrentUser();
       if (!cu) return;
 
-      if (chatPartner === LUMINA_USERNAME && cu.username !== VERIFIED_USER) {
-        alert('Bu özellik şu anda sadece test kullanıcısına açıktır.');
-        return;
-      }
+      // Lumina koruması tamamen kaldırıldı, herkes kullanabilir
 
       const msgs = getMsgs(cu.username, chatPartner);
       msgs.push({ from: cu.username, text, time: Date.now() });
