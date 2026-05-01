@@ -695,6 +695,24 @@
       flex-shrink: 0;
     }
 
+    /* Bug Hunter rozeti */
+    .bug-hunter-badge {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+      margin-left: 4px;
+      background: #ff6b35;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 12px;
+      letter-spacing: 1px;
+      pointer-events: none;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
     .lumina-status {
       color: #25d366 !important;
       font-weight: 500;
@@ -907,6 +925,7 @@
     }
 
     const VERIFIED_USER = 'BaconPrime_Dev';
+    const BUGHUNTER_USER = 'Root_Overseer';
     const LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png';
 
@@ -935,7 +954,6 @@
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // Ayarlar modal
     const settingsModal = document.getElementById('settingsModal');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const avatarPreview = document.getElementById('avatarPreview');
@@ -947,7 +965,6 @@
     const settingsPhone = document.getElementById('settingsPhone');
     const darkModeCheckbox = document.getElementById('darkModeCheckbox');
 
-    // Profil kartı
     const profileModal = document.getElementById('profileModal');
     const closeProfileBtn = document.getElementById('closeProfileBtn');
     const profileAvatarLarge = document.getElementById('profileAvatarLarge');
@@ -960,7 +977,6 @@
     let chatPartner = null;
     let tempAvatarData = null;
 
-    // ==================== RESİM KORUMASI ====================
     document.addEventListener('contextmenu', (e) => {
       if (e.target.tagName === 'IMG') e.preventDefault();
     });
@@ -968,7 +984,6 @@
       if (e.target.tagName === 'IMG') e.preventDefault();
     });
 
-    // ==================== KARANLIK MOD ====================
     function applyDarkMode(enabled) {
       if (enabled) {
         document.body.classList.add('dark');
@@ -993,7 +1008,6 @@
       applyDarkMode(darkModeCheckbox.checked);
     });
 
-    // ==================== EKRAN ====================
     function showScreen(scr) {
       authScreen.classList.remove('active');
       contactsScreen.classList.remove('active');
@@ -1006,6 +1020,8 @@
         headerTitle.innerHTML = `${partnerUsername} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>`;
       } else if (partnerUsername === LUMINA_USERNAME) {
         headerTitle.innerHTML = `${partnerUsername} <span class="ai-badge">AI</span>`;
+      } else if (partnerUsername === BUGHUNTER_USER) {
+        headerTitle.innerHTML = `${partnerUsername} <span class="bug-hunter-badge">🛡️ Bug Hunter</span>`;
       } else {
         headerTitle.textContent = titleText;
       }
@@ -1028,7 +1044,6 @@
       };
     }
 
-    // ==================== PROFİL KARTI ====================
     function showProfileCard(username) {
       const user = getUsers().find(u => u.username === username);
       if (!user) return;
@@ -1038,6 +1053,8 @@
         profileBadge.innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓" style="width:23px;height:23px;"></span>';
       } else if (user.username === LUMINA_USERNAME) {
         profileBadge.innerHTML = '<span class="ai-badge">AI</span>';
+      } else if (user.username === BUGHUNTER_USER) {
+        profileBadge.innerHTML = '<span class="bug-hunter-badge">🛡️ Bug Hunter</span>';
       } else {
         profileBadge.innerHTML = '';
       }
@@ -1057,7 +1074,6 @@
       if (e.target === profileModal) profileModal.classList.remove('show');
     });
 
-    // ==================== AUTH ====================
     switchLink.addEventListener('click', (e) => {
       e.preventDefault();
       isLogin = !isLogin;
@@ -1114,7 +1130,6 @@
       passwordInput.value = '';
     });
 
-    // Çıkış
     logoutBtn.addEventListener('click', () => {
       const cu = getCurrentUser();
       if (cu) setUserOffline(cu.username);
@@ -1124,7 +1139,6 @@
       appHeader.classList.remove('visible');
     });
 
-    // Geri
     backBtn.addEventListener('click', () => {
       if (chatPartner) {
         const cu = getCurrentUser();
@@ -1139,7 +1153,6 @@
       if (cu) setUserOffline(cu.username);
     });
 
-    // ==================== REHBER ====================
     function enterApp() {
       appHeader.classList.add('visible');
       showContactsScreen();
@@ -1182,6 +1195,7 @@
       users.forEach(u => {
         const isVerified = (u.username === VERIFIED_USER);
         const isLumina = (u.username === LUMINA_USERNAME);
+        const isBugHunter = (u.username === BUGHUNTER_USER);
         const avatarHTML = u.avatar
           ? `<img src="${u.avatar}" alt="pf">`
           : isLumina ? `<img src="${LUMINA_AVATAR_URL}" alt="pf">` : u.username.charAt(0).toUpperCase();
@@ -1203,6 +1217,7 @@
               ${u.username}
               ${isVerified ? '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>' : ''}
               ${isLumina ? '<span class="ai-badge">AI</span>' : ''}
+              ${isBugHunter ? '<span class="bug-hunter-badge">🛡️ Bug Hunter</span>' : ''}
             </span>
             <div class="contact-phone">${u.phone || ''}</div>
             <div class="contact-status ${statusClass}">${statusText}</div>
@@ -1241,7 +1256,6 @@
       renderContactList(users);
     });
 
-    // ==================== SOHBET ====================
     function openChat(partner) {
       chatPartner = partner;
       const cu = getCurrentUser();
@@ -1296,8 +1310,6 @@
       const cu = getCurrentUser();
       if (!cu) return;
 
-      // Lumina koruması tamamen kaldırıldı, herkes kullanabilir
-
       const msgs = getMsgs(cu.username, chatPartner);
       msgs.push({ from: cu.username, text, time: Date.now() });
       saveMsgs(cu.username, chatPartner, msgs);
@@ -1351,7 +1363,6 @@
       return colors[Math.abs(hash) % colors.length];
     }
 
-    // ==================== AYARLAR ====================
     settingsBtn.addEventListener('click', () => {
       const cu = getCurrentUser();
       if (!cu) return;
@@ -1408,7 +1419,6 @@
       }
     });
 
-    // ==================== BAŞLANGIÇ ====================
     (function init() {
       let users = getUsers();
 
