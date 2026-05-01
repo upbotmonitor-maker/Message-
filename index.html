@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Pro - Emir Ali & Hasan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="auth-screen" class="container">
+        <div class="card">
+            <h2>Hoş Geldin</h2>
+            <p>Devam etmek için bir kullanıcı adı seç.</p>
+            <input type="text" id="username-input" placeholder="Kullanıcı Adı">
+            <button onclick="authSistem.girisYap()">Hesap Oluştur / Giriş</button>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="container hidden">
+        <div class="chat-header">
+            <div id="user-profile">
+                <span id="display-name"></span>
+                <span class="mavi-tik"></span> </div>
+            <small id="display-number"></small>
+        </div>
+
+        <div id="chat-messages">
+            </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="message-input" placeholder="Mesajınızı yazın...">
+            <button onclick="chatSistem.mesajGonder()">Gönder</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
