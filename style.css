@@ -1,0 +1,35 @@
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { background-color: #d1d7db; display: flex; justify-content: center; align-items: center; height: 100vh; }
+.container { width: 100%; max-width: 450px; height: 90vh; background: #fff; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; }
+.hidden { display: none !important; }
+
+/* Giriş Ekranı */
+.card { padding: 40px; text-align: center; margin-top: auto; margin-bottom: auto; }
+input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; }
+button { width: 100%; padding: 12px; background: #25d366; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+/* Sohbet Ekranı */
+.chat-header { background: #075e54; color: white; padding: 15px; text-align: center; }
+#chat-messages { flex: 1; background: #e5ddd5; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+
+/* Mavi Tik Rozeti (Senin Görselin) */
+.mavi-tik {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-image: url('https://i.imgur.com/14PqZwx.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    margin-left: 5px;
+    pointer-events: none; /* Üzerine tıklanamaz */
+    user-select: none;    /* Seçilemez */
+}
+
+/* Mesaj Balonları */
+.msg { max-width: 80%; padding: 10px; border-radius: 10px; margin-bottom: 10px; position: relative; }
+.sent { background: #dcf8c6; align-self: flex-end; }
+.msg-info { font-size: 0.7em; color: #666; display: block; text-align: right; margin-top: 5px; }
+
+.chat-input-area { padding: 15px; background: #f0f2f5; display: flex; gap: 10px; }
