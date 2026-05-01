@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
   <title>ChatVerse • Sohbet</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --bg: #eae2d6;
@@ -79,648 +75,235 @@
       z-index: 10;
       display: none;
     }
-    .app-header.visible {
-      display: flex;
-    }
+    .app-header.visible { display: flex; }
 
     .back-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
+      background: none; border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center; padding: 4px;
     }
-    .back-btn.show {
-      display: flex;
-    }
+    .back-btn.show { display: flex; }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      overflow: hidden;
-    }
-
+    .header-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
     .header-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: #128c7e;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 1rem;
-      color: white;
-      flex-shrink: 0;
-      overflow: hidden;
-      cursor: pointer;
+      width: 38px; height: 38px; border-radius: 50%; background: #128c7e;
+      display: none; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 1rem; color: white; flex-shrink: 0;
+      overflow: hidden; cursor: pointer;
     }
-    .header-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      user-select: none;
-    }
-    .header-avatar.show {
-      display: flex;
-    }
+    .header-avatar img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
+    .header-avatar.show { display: flex; }
 
     .title {
-      font-size: 1.1rem;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      font-size: 1.1rem; font-weight: 500; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
+    .header-actions { display: flex; align-items: center; gap: 4px; }
     .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: 0.2s;
+      background: none; border: none; cursor: pointer; padding: 6px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;
     }
-    .icon-btn:hover {
-      background: rgba(255,255,255,0.15);
-    }
+    .icon-btn:hover { background: rgba(255,255,255,0.15); }
 
     .logout-btn {
-      background: rgba(255,255,255,0.15);
-      border: none;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      background: rgba(255,255,255,0.15); border: none; color: white;
+      padding: 6px 12px; border-radius: 20px; font-size: 0.75rem;
+      cursor: pointer; display: flex; align-items: center; gap: 4px;
     }
 
-    .screen {
-      display: none;
-      flex: 1;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .screen.active {
-      display: flex;
-    }
+    .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .screen.active { display: flex; }
 
-    .auth-screen {
-      background: var(--auth-bg);
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      gap: 20px;
-    }
-
-    .auth-logo {
-      text-align: center;
-    }
+    .auth-screen { background: var(--auth-bg); justify-content: center; align-items: center; padding: 20px; gap: 20px; }
+    .auth-logo { text-align: center; }
     .logo-circle {
-      width: 70px;
-      height: 70px;
-      background: #25d366;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 10px;
+      width: 70px; height: 70px; background: #25d366; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
     }
-    .auth-logo h1 {
-      color: var(--text);
-      font-size: 1.6rem;
-    }
-    .auth-logo p {
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-    }
+    .auth-logo h1 { color: var(--text); font-size: 1.6rem; }
+    .auth-logo p { color: var(--text-secondary); font-size: 0.85rem; }
 
     .auth-box {
-      background: var(--card-bg);
-      padding: 24px 20px;
-      border-radius: 14px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 380px;
+      background: var(--card-bg); padding: 24px 20px; border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08); width: 100%; max-width: 380px;
     }
-    .auth-box h2 {
-      color: var(--text);
-      margin-bottom: 18px;
-      font-size: 1.2rem;
-    }
+    .auth-box h2 { color: var(--text); margin-bottom: 18px; font-size: 1.2rem; }
 
     .input-wrapper {
-      display: flex;
-      align-items: center;
-      background: var(--search-bg);
-      border-radius: 10px;
-      padding: 0 12px;
-      margin-bottom: 10px;
-      border: 1px solid var(--border);
+      display: flex; align-items: center; background: var(--search-bg);
+      border-radius: 10px; padding: 0 12px; margin-bottom: 10px; border: 1px solid var(--border);
     }
     .input-wrapper input {
-      width: 100%;
-      padding: 14px 10px;
-      border: none;
-      background: transparent;
-      font-size: 0.95rem;
-      outline: none;
-      color: var(--text);
+      width: 100%; padding: 14px 10px; border: none; background: transparent;
+      font-size: 0.95rem; outline: none; color: var(--text);
     }
 
     .auth-box > button {
-      width: 100%;
-      background: #25d366;
-      border: none;
-      color: white;
-      padding: 14px;
-      border-radius: 10px;
-      font-weight: bold;
-      font-size: 1rem;
-      margin-top: 8px;
-      cursor: pointer;
-      transition: 0.2s;
+      width: 100%; background: #25d366; border: none; color: white;
+      padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1rem;
+      margin-top: 8px; cursor: pointer; transition: 0.2s;
     }
-    .auth-box > button:hover {
-      background: #1ebc56;
-    }
+    .auth-box > button:hover { background: #1ebc56; }
 
-    .switch-text {
-      margin-top: 14px;
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      text-align: center;
-    }
-    .switch-text a {
-      color: #25d366;
-      text-decoration: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    .switch-text { margin-top: 14px; color: var(--text-secondary); font-size: 0.9rem; text-align: center; }
+    .switch-text a { color: #25d366; text-decoration: none; font-weight: bold; cursor: pointer; }
 
     .search-bar {
-      display: flex;
-      align-items: center;
-      background: var(--search-bg);
-      margin: 8px 12px;
-      padding: 8px 14px;
-      border-radius: 25px;
-      gap: 10px;
-      border: 1px solid var(--border);
+      display: flex; align-items: center; background: var(--search-bg);
+      margin: 8px 12px; padding: 8px 14px; border-radius: 25px; gap: 10px; border: 1px solid var(--border);
     }
     .search-bar input {
-      flex: 1;
-      border: none;
-      outline: none;
-      font-size: 0.9rem;
-      background: transparent;
-      color: var(--text);
+      flex: 1; border: none; outline: none; font-size: 0.9rem;
+      background: transparent; color: var(--text);
     }
-    .search-bar input::placeholder {
-      color: var(--text-secondary);
-    }
+    .search-bar input::placeholder { color: var(--text-secondary); }
 
-    .contact-list {
-      flex: 1;
-      overflow-y: auto;
-      background: var(--card-bg);
-    }
+    .contact-list { flex: 1; overflow-y: auto; background: var(--card-bg); }
     .contact-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: 0.1s;
-      gap: 12px;
+      display: flex; align-items: center; padding: 12px 16px;
+      border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.1s; gap: 12px;
     }
-    .contact-item:hover {
-      background: var(--hover);
-    }
-    .contact-item:active {
-      background: var(--hover);
-    }
+    .contact-item:hover { background: var(--hover); }
+    .contact-item:active { background: var(--hover); }
 
     .contact-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: white;
-      font-size: 1.2rem;
-      overflow: hidden;
-      cursor: pointer;
+      width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; color: white; font-size: 1.2rem; overflow: hidden; cursor: pointer;
     }
-    .contact-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      user-select: none;
-    }
+    .contact-avatar img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
 
-    .contact-info {
-      flex: 1;
-      overflow: hidden;
-    }
+    .contact-info { flex: 1; overflow: hidden; }
     .contact-name {
-      font-weight: 500;
-      font-size: 1rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--text);
+      font-weight: 500; font-size: 1rem; display: inline-flex; align-items: center; gap: 4px; color: var(--text);
     }
-    .contact-phone {
-      color: var(--text-secondary);
-      font-size: 0.8rem;
-      margin-top: 2px;
-    }
-    .contact-status {
-      font-size: 0.75rem;
-      margin-top: 1px;
-    }
-    .contact-status.online {
-      color: #25d366;
-      font-weight: 500;
-    }
-    .contact-status.offline {
-      color: #888;
-    }
+    .contact-phone { color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px; }
+    .contact-status { font-size: 0.75rem; margin-top: 1px; }
+    .contact-status.online { color: #25d366; font-weight: 500; }
+    .contact-status.offline { color: #888; }
 
     .unread-badge {
-      background: #25d366;
-      color: white;
-      border-radius: 50%;
-      min-width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      font-weight: bold;
-      padding: 0 4px;
-      flex-shrink: 0;
+      background: #25d366; color: white; border-radius: 50%;
+      min-width: 20px; height: 20px; display: flex; align-items: center;
+      justify-content: center; font-size: 0.7rem; font-weight: bold; padding: 0 4px; flex-shrink: 0;
     }
 
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 12px;
-      background: var(--chat-bg);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px 12px; background: var(--chat-bg); display: flex; flex-direction: column; gap: 4px; }
 
-    .message-row {
-      display: flex;
-      margin-bottom: 3px;
-    }
-    .message-row.outgoing {
-      justify-content: flex-end;
-    }
-    .message-row.incoming {
-      justify-content: flex-start;
+    .message-row { display: flex; margin-bottom: 3px; flex-direction: column; }
+    .message-row.outgoing { align-items: flex-end; }
+    .message-row.incoming { align-items: flex-start; }
+
+    .message-sender {
+      font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 2px; padding: 0 4px;
+      font-weight: 500;
     }
 
     .message-bubble {
-      max-width: 78%;
-      padding: 9px 13px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      line-height: 1.45;
-      word-break: break-word;
-      position: relative;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
-      color: var(--text);
-      overflow-wrap: anywhere;
+      max-width: 78%; padding: 9px 13px; border-radius: 8px;
+      font-size: 0.95rem; line-height: 1.45; word-break: break-word;
+      position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.05); color: var(--text); overflow-wrap: anywhere;
     }
-    .outgoing .message-bubble {
-      background: var(--msg-out);
-      border-radius: 8px 2px 8px 8px;
-    }
-    .incoming .message-bubble {
-      background: var(--msg-in);
-      border-radius: 2px 8px 8px 8px;
-    }
+    .outgoing .message-bubble { background: var(--msg-out); border-radius: 8px 2px 8px 8px; }
+    .incoming .message-bubble { background: var(--msg-in); border-radius: 2px 8px 8px 8px; }
 
     .message-time {
-      display: block;
-      text-align: right;
-      font-size: 0.65rem;
-      color: #888;
-      margin-top: 2px;
-      line-height: 1;
+      display: block; text-align: right; font-size: 0.65rem; color: #888; margin-top: 2px; line-height: 1;
     }
 
     .chat-input-area {
-      display: flex;
-      padding: 8px 10px;
-      background: var(--input-bg);
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      margin-bottom: env(safe-area-inset-bottom, 0px);
+      display: flex; padding: 8px 10px; background: var(--input-bg);
+      align-items: center; gap: 6px; flex-shrink: 0; margin-bottom: env(safe-area-inset-bottom, 0px);
     }
     .chat-input-area input {
-      flex: 1;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 25px;
-      font-size: 0.95rem;
-      outline: none;
-      background: var(--card-bg);
-      color: var(--text);
+      flex: 1; padding: 10px 14px; border: none; border-radius: 25px;
+      font-size: 0.95rem; outline: none; background: var(--card-bg); color: var(--text);
     }
     .send-btn {
-      background: #075e54;
-      border: none;
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
+      background: #075e54; border: none; width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
     }
-    .send-btn:active {
-      background: #054d44;
-    }
+    .send-btn:active { background: #054d44; }
 
-    .emoji-btn, .attach-btn {
-      flex-shrink: 0;
-    }
+    .emoji-btn, .attach-btn { flex-shrink: 0; }
 
     .modal-overlay {
-      display: none;
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--overlay);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
+      display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--overlay); z-index: 100; align-items: center; justify-content: center;
     }
-    .modal-overlay.show {
-      display: flex;
-    }
+    .modal-overlay.show { display: flex; }
 
-    .modal-content {
-      background: var(--card-bg);
-      width: 90%;
-      max-width: 380px;
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
+    .modal-content { background: var(--card-bg); width: 90%; max-width: 380px; border-radius: 16px; overflow: hidden; }
     .modal-header {
-      background: var(--header-bg);
-      color: white;
-      padding: 14px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      background: var(--header-bg); color: white; padding: 14px 18px;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .modal-close {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-    }
+    .modal-close { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+    .modal-body { padding: 20px; }
 
-    .modal-body {
-      padding: 20px;
-    }
+    .setting-item { margin-bottom: 20px; }
+    .setting-item label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text); }
 
-    .setting-item {
-      margin-bottom: 20px;
-    }
-    .setting-item label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .avatar-upload {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    .avatar-upload { display: flex; flex-direction: column; align-items: center; }
     .avatar-preview {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background: #e0e0e0;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      font-size: 2.5rem;
-      color: white;
-      font-weight: bold;
+      width: 90px; height: 90px; border-radius: 50%; background: #e0e0e0;
+      margin-bottom: 10px; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; font-size: 2.5rem; color: white; font-weight: bold;
     }
-    .avatar-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      user-select: none;
-    }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
 
     #chooseAvatarBtn, #removeAvatarBtn, .save-btn {
-      background: #25d366;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 6px;
+      background: #25d366; color: white; border: none; padding: 10px 18px;
+      border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 6px;
     }
-    #removeAvatarBtn {
-      background: #ff4d4f;
-    }
+    #removeAvatarBtn { background: #ff4d4f; }
+    .save-btn { width: 100%; margin-top: 10px; background: #075e54; }
 
-    .save-btn {
-      width: 100%;
-      margin-top: 10px;
-      background: #075e54;
-    }
-
-    .dark-mode-toggle {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 48px;
-      height: 26px;
-    }
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
+    .dark-mode-toggle { display: flex; justify-content: space-between; align-items: center; }
+    .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .3s;
-      border-radius: 26px;
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .3s; border-radius: 26px;
     }
     .slider:before {
-      position: absolute;
-      content: "";
-      height: 20px;
-      width: 20px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
+      position: absolute; content: ""; height: 20px; width: 20px;
+      left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;
     }
-    input:checked + .slider {
-      background-color: #25d366;
-    }
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
+    input:checked + .slider { background-color: #25d366; }
+    input:checked + .slider:before { transform: translateX(22px); }
 
     .profile-card {
-      background: var(--card-bg);
-      width: 88%;
-      max-width: 350px;
-      border-radius: 20px;
-      padding: 24px 16px;
-      text-align: center;
-      position: relative;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: var(--card-bg); width: 88%; max-width: 350px; border-radius: 20px;
+      padding: 24px 16px; text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .profile-close {
-      position: absolute;
-      top: 8px;
-      right: 14px;
-      color: var(--text) !important;
-      font-size: 28px;
-    }
+    .profile-close { position: absolute; top: 8px; right: 14px; color: var(--text) !important; font-size: 28px; }
     .profile-avatar-large {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      margin: 0 auto 14px;
-      background: #075e54;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      color: white;
-      font-weight: bold;
-      overflow: hidden;
+      width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 14px;
+      background: #075e54; display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; color: white; font-weight: bold; overflow: hidden;
     }
-    .profile-avatar-large img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      user-select: none;
-    }
+    .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
 
-    .verified-badge {
-      display: inline-flex;
-      align-items: center;
-      vertical-align: middle;
-      margin-left: 2px;
-      flex-shrink: 0;
-    }
-    .verified-badge img {
-      width: 23px;
-      height: 23px;
-      object-fit: contain;
-      pointer-events: none;
-      user-select: none;
-    }
+    .verified-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 2px; flex-shrink: 0; }
+    .verified-badge img { width: 23px; height: 23px; object-fit: contain; pointer-events: none; user-select: none; }
 
-    .name-with-badge {
-      display: inline-flex;
-      align-items: center;
-      vertical-align: middle;
-      gap: 2px;
-    }
+    .name-with-badge { display: inline-flex; align-items: center; vertical-align: middle; gap: 2px; }
 
     .ai-badge {
-      display: inline-flex;
-      align-items: center;
-      vertical-align: middle;
-      margin-left: 4px;
-      background: #25d366;
-      color: white;
-      font-size: 0.65rem;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 12px;
-      letter-spacing: 1px;
-      pointer-events: none;
-      user-select: none;
-      flex-shrink: 0;
+      display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px;
+      background: #25d366; color: white; font-size: 0.65rem; font-weight: bold;
+      padding: 2px 6px; border-radius: 12px; letter-spacing: 1px;
+      pointer-events: none; user-select: none; flex-shrink: 0;
     }
 
-    .bug-hunter-badge {
-      display: inline-flex;
-      align-items: center;
-      vertical-align: middle;
-      margin-left: 4px;
-      pointer-events: none;
-      user-select: none;
-      flex-shrink: 0;
-    }
-    .bug-hunter-badge img {
-      width: 23px;
-      height: 23px;
-      object-fit: contain;
-    }
+    .bug-hunter-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; pointer-events: none; user-select: none; flex-shrink: 0; }
+    .bug-hunter-badge img { width: 23px; height: 23px; object-fit: contain; }
 
-    .lumina-status {
-      color: #25d366 !important;
-      font-weight: 500;
-      font-style: italic;
-    }
+    .lumina-status { color: #25d366 !important; font-weight: 500; font-style: italic; }
 
     @media (max-width: 500px) {
-      .app-container {
-        max-width: 100%;
-        border-radius: 0;
-      }
+      .app-container { max-width: 100%; border-radius: 0; }
     }
   </style>
 </head>
@@ -846,86 +429,55 @@
     const ONLINE_USERS_KEY = 'cv_online';
     const DARK_MODE_KEY = 'cv_dark';
 
-    function getUsers() {
-      return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-    }
-    function saveUsers(users) {
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    }
-    function getCurrentUser() {
-      return JSON.parse(localStorage.getItem(CURRENT_USER_KEY));
-    }
-    function saveCurrentUser(user) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-    }
-    function clearCurrentUser() {
-      localStorage.removeItem(CURRENT_USER_KEY);
-    }
+    function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
+    function saveUsers(users) { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+    function getCurrentUser() { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }
+    function saveCurrentUser(user) { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user)); }
+    function clearCurrentUser() { localStorage.removeItem(CURRENT_USER_KEY); }
     function updateCurrentUser(updated) {
       const users = getUsers();
       const idx = users.findIndex(u => u.username === updated.username);
-      if (idx !== -1) {
-        users[idx] = updated;
-        saveUsers(users);
-        saveCurrentUser(updated);
-      }
+      if (idx !== -1) { users[idx] = updated; saveUsers(users); saveCurrentUser(updated); }
     }
 
-    function getOnlineUsers() {
-      return JSON.parse(localStorage.getItem(ONLINE_USERS_KEY)) || {};
-    }
+    function getOnlineUsers() { return JSON.parse(localStorage.getItem(ONLINE_USERS_KEY)) || {}; }
     function setUserOnline(username) {
-      const online = getOnlineUsers();
-      online[username] = Date.now();
+      const online = getOnlineUsers(); online[username] = Date.now();
       localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(online));
     }
     function setUserOffline(username) {
-      const online = getOnlineUsers();
-      delete online[username];
+      const online = getOnlineUsers(); delete online[username];
       localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(online));
     }
-    function isUserOnline(username) {
-      const online = getOnlineUsers();
-      return !!online[username];
-    }
+    function isUserOnline(username) { return !!getOnlineUsers()[username]; }
 
     function getUnreadCount(currentUser, partner) {
-      const key = `unread_${currentUser}_${partner}`;
-      return parseInt(localStorage.getItem(key) || '0');
+      return parseInt(localStorage.getItem(`unread_${currentUser}_${partner}`) || '0');
     }
     function incrementUnread(currentUser, partner) {
       const key = `unread_${currentUser}_${partner}`;
-      const current = parseInt(localStorage.getItem(key) || '0');
-      localStorage.setItem(key, current + 1);
+      localStorage.setItem(key, (parseInt(localStorage.getItem(key) || '0') + 1));
     }
     function resetUnread(currentUser, partner) {
-      const key = `unread_${currentUser}_${partner}`;
-      localStorage.setItem(key, '0');
+      localStorage.setItem(`unread_${currentUser}_${partner}`, '0');
     }
 
     const codes = ['+90','+1','+44','+49','+33','+81','+7','+39'];
     function randomPhone() {
-      const c = codes[Math.floor(Math.random() * codes.length)];
-      const n = Math.floor(100000000 + Math.random() * 900000000);
-      return `${c} ${n}`;
+      return `${codes[Math.floor(Math.random() * codes.length)]} ${Math.floor(100000000 + Math.random() * 900000000)}`;
     }
 
-    function chatKey(a, b) {
-      const s = [a, b].sort();
-      return MESSAGES_PREFIX + s[0] + '_' + s[1];
-    }
-    function getMsgs(a, b) {
-      return JSON.parse(localStorage.getItem(chatKey(a,b))) || [];
-    }
-    function saveMsgs(a, b, msgs) {
-      localStorage.setItem(chatKey(a,b), JSON.stringify(msgs));
-    }
+    function chatKey(a, b) { const s = [a, b].sort(); return MESSAGES_PREFIX + s[0] + '_' + s[1]; }
+    function getMsgs(a, b) { return JSON.parse(localStorage.getItem(chatKey(a,b))) || []; }
+    function saveMsgs(a, b, msgs) { localStorage.setItem(chatKey(a,b), JSON.stringify(msgs)); }
 
     const VERIFIED_USER = 'BaconPrime_Dev';
     const BUGHUNTER_USER = 'Root_Overseer';
     const LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png';
     const BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
+    const GROUP_CHAT_KEY = 'group_muhabbet_odasi';
+    const GROUP_NAME = 'Muhabbet Odası';
 
     // ==================== UI ====================
     const appHeader = document.getElementById('appHeader');
@@ -934,24 +486,20 @@
     const headerTitle = document.getElementById('headerTitle');
     const settingsBtn = document.getElementById('settingsBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-
     const authScreen = document.getElementById('authScreen');
     const contactsScreen = document.getElementById('contactsScreen');
     const chatScreen = document.getElementById('chatScreen');
-
     const authTitle = document.getElementById('authTitle');
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
     const authActionBtn = document.getElementById('authActionBtn');
     const switchText = document.getElementById('switchText');
     const switchLink = document.getElementById('switchLink');
-
     const searchInput = document.getElementById('searchInput');
     const contactListDiv = document.getElementById('contactList');
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-
     const settingsModal = document.getElementById('settingsModal');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const avatarPreview = document.getElementById('avatarPreview');
@@ -962,7 +510,6 @@
     const settingsUsername = document.getElementById('settingsUsername');
     const settingsPhone = document.getElementById('settingsPhone');
     const darkModeCheckbox = document.getElementById('darkModeCheckbox');
-
     const profileModal = document.getElementById('profileModal');
     const closeProfileBtn = document.getElementById('closeProfileBtn');
     const profileAvatarLarge = document.getElementById('profileAvatarLarge');
@@ -975,36 +522,19 @@
     let chatPartner = null;
     let tempAvatarData = null;
 
-    document.addEventListener('contextmenu', (e) => {
-      if (e.target.tagName === 'IMG') e.preventDefault();
-    });
-    document.addEventListener('dragstart', (e) => {
-      if (e.target.tagName === 'IMG') e.preventDefault();
-    });
+    document.addEventListener('contextmenu', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
+    document.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
 
     function applyDarkMode(enabled) {
-      if (enabled) {
-        document.body.classList.add('dark');
-      } else {
-        document.body.classList.remove('dark');
-      }
+      document.body.classList.toggle('dark', enabled);
       localStorage.setItem(DARK_MODE_KEY, enabled);
     }
-
     (function loadDarkMode() {
-      const saved = localStorage.getItem(DARK_MODE_KEY);
-      if (saved === 'true') {
-        applyDarkMode(true);
-        if (darkModeCheckbox) darkModeCheckbox.checked = true;
-      } else {
-        applyDarkMode(false);
-        if (darkModeCheckbox) darkModeCheckbox.checked = false;
-      }
+      const saved = localStorage.getItem(DARK_MODE_KEY) === 'true';
+      applyDarkMode(saved);
+      if (darkModeCheckbox) darkModeCheckbox.checked = saved;
     })();
-
-    darkModeCheckbox.addEventListener('change', () => {
-      applyDarkMode(darkModeCheckbox.checked);
-    });
+    darkModeCheckbox.addEventListener('change', () => applyDarkMode(darkModeCheckbox.checked));
 
     function showScreen(scr) {
       authScreen.classList.remove('active');
@@ -1020,12 +550,12 @@
         headerTitle.innerHTML = `${partnerUsername} <span class="ai-badge">AI</span>`;
       } else if (partnerUsername === BUGHUNTER_USER) {
         headerTitle.innerHTML = `${partnerUsername} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}" alt="Bug Hunter"></span>`;
+      } else if (partnerUsername === GROUP_CHAT_KEY) {
+        headerTitle.textContent = GROUP_NAME;
       } else {
         headerTitle.textContent = titleText;
       }
-
       backBtn.classList.toggle('show', showBack);
-
       if (avatarSrc) {
         headerAvatar.innerHTML = `<img src="${avatarSrc}" alt="pf">`;
         headerAvatar.classList.add('show');
@@ -1033,13 +563,13 @@
         headerAvatar.innerHTML = '';
         headerAvatar.textContent = initial;
         headerAvatar.classList.add('show');
+      } else if (partnerUsername === GROUP_CHAT_KEY) {
+        headerAvatar.innerHTML = '👥';
+        headerAvatar.classList.add('show');
       } else {
         headerAvatar.classList.remove('show');
       }
-
-      headerAvatar.onclick = () => {
-        if (partnerUsername) showProfileCard(partnerUsername);
-      };
+      headerAvatar.onclick = () => { if (partnerUsername && partnerUsername !== GROUP_CHAT_KEY) showProfileCard(partnerUsername); };
     }
 
     function showProfileCard(username) {
@@ -1058,122 +588,68 @@
       }
       profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
       profileStatus.className = user.username === LUMINA_USERNAME ? 'lumina-status' : '';
-      profileAvatarLarge.innerHTML = user.avatar
-        ? `<img src="${user.avatar}" alt="pf">`
-        : user.username === LUMINA_USERNAME ? `<img src="${LUMINA_AVATAR_URL}" alt="pf">` : user.username.charAt(0).toUpperCase();
-      profileAvatarLarge.style.background = user.avatar ? 'transparent' : (user.username === LUMINA_USERNAME ? 'transparent' : avatarColor(user.username));
+      profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}" alt="pf">` : user.username.charAt(0).toUpperCase();
       profileModal.classList.add('show');
     }
-
-    closeProfileBtn.addEventListener('click', () => {
-      profileModal.classList.remove('show');
-    });
-    profileModal.addEventListener('click', (e) => {
-      if (e.target === profileModal) profileModal.classList.remove('show');
-    });
+    closeProfileBtn.addEventListener('click', () => profileModal.classList.remove('show'));
+    profileModal.addEventListener('click', (e) => { if (e.target === profileModal) profileModal.classList.remove('show'); });
 
     switchLink.addEventListener('click', (e) => {
       e.preventDefault();
       isLogin = !isLogin;
       if (isLogin) {
-        authTitle.textContent = 'Giriş Yap';
-        authActionBtn.textContent = 'Giriş Yap';
-        switchText.textContent = 'Hesabın yok mu?';
-        switchLink.textContent = 'Kayıt ol';
+        authTitle.textContent = 'Giriş Yap'; authActionBtn.textContent = 'Giriş Yap';
+        switchText.textContent = 'Hesabın yok mu?'; switchLink.textContent = 'Kayıt ol';
       } else {
-        authTitle.textContent = 'Kayıt Ol';
-        authActionBtn.textContent = 'Kayıt Ol';
-        switchText.textContent = 'Zaten hesabın var mı?';
-        switchLink.textContent = 'Giriş yap';
+        authTitle.textContent = 'Kayıt Ol'; authActionBtn.textContent = 'Kayıt Ol';
+        switchText.textContent = 'Zaten hesabın var mı?'; switchLink.textContent = 'Giriş yap';
       }
     });
 
     authActionBtn.addEventListener('click', () => {
       const username = usernameInput.value.trim();
       const password = passwordInput.value.trim();
-      if (!username || !password) {
-        alert('Kullanıcı adı ve şifre gerekli.');
-        return;
-      }
+      if (!username || !password) return alert('Kullanıcı adı ve şifre gerekli.');
       let users = getUsers();
-
       if (isLogin) {
         const user = users.find(u => u.username === username && u.password === password);
-        if (!user) {
-          alert('Kullanıcı adı veya şifre hatalı.');
-          return;
-        }
-        saveCurrentUser(user);
-        setUserOnline(user.username);
-        enterApp();
+        if (!user) return alert('Kullanıcı adı veya şifre hatalı.');
+        saveCurrentUser(user); setUserOnline(user.username); enterApp();
       } else {
-        if (users.some(u => u.username === username)) {
-          alert('Bu kullanıcı adı alınmış.');
-          return;
-        }
-        const newUser = {
-          username,
-          password,
-          phone: randomPhone(),
-          avatar: null,
-        };
-        users.push(newUser);
-        saveUsers(users);
-        saveCurrentUser(newUser);
-        setUserOnline(newUser.username);
-        alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`);
-        enterApp();
+        if (users.some(u => u.username === username)) return alert('Bu kullanıcı adı alınmış.');
+        const newUser = { username, password, phone: randomPhone(), avatar: null };
+        users.push(newUser); saveUsers(users); saveCurrentUser(newUser); setUserOnline(newUser.username);
+        alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`); enterApp();
       }
-      usernameInput.value = '';
-      passwordInput.value = '';
+      usernameInput.value = ''; passwordInput.value = '';
     });
 
     logoutBtn.addEventListener('click', () => {
-      const cu = getCurrentUser();
-      if (cu) setUserOffline(cu.username);
-      clearCurrentUser();
-      chatPartner = null;
-      showScreen(authScreen);
-      appHeader.classList.remove('visible');
+      const cu = getCurrentUser(); if (cu) setUserOffline(cu.username);
+      clearCurrentUser(); chatPartner = null; showScreen(authScreen); appHeader.classList.remove('visible');
     });
 
     backBtn.addEventListener('click', () => {
-      if (chatPartner) {
-        const cu = getCurrentUser();
-        if (cu) resetUnread(cu.username, chatPartner);
-      }
-      chatPartner = null;
-      showContactsScreen();
+      if (chatPartner) { const cu = getCurrentUser(); if (cu) resetUnread(cu.username, chatPartner); }
+      chatPartner = null; showContactsScreen();
     });
 
     window.addEventListener('beforeunload', () => {
-      const cu = getCurrentUser();
-      if (cu) setUserOffline(cu.username);
+      const cu = getCurrentUser(); if (cu) setUserOffline(cu.username);
     });
 
-    function enterApp() {
-      appHeader.classList.add('visible');
-      showContactsScreen();
-    }
+    function enterApp() { appHeader.classList.add('visible'); showContactsScreen(); }
 
     function showContactsScreen() {
       const cu = getCurrentUser();
-      if (!cu) {
-        showScreen(authScreen);
-        return;
-      }
+      if (!cu) { showScreen(authScreen); return; }
       updateHeaderUI('Sohbetler', false, null, '', '');
-
       let users = getUsers().filter(u => u.username !== cu.username);
-
       users.sort((a, b) => {
-        const msgsA = getMsgs(cu.username, a.username);
-        const msgsB = getMsgs(cu.username, b.username);
-        const timeA = msgsA.length ? msgsA[msgsA.length - 1].time : 0;
-        const timeB = msgsB.length ? msgsB[msgsB.length - 1].time : 0;
+        const msgsA = getMsgs(cu.username, a.username); const timeA = msgsA.length ? msgsA[msgsA.length - 1].time : 0;
+        const msgsB = getMsgs(cu.username, b.username); const timeB = msgsB.length ? msgsB[msgsB.length - 1].time : 0;
         return timeB - timeA;
       });
-
       renderContactList(users);
       showScreen(contactsScreen);
     }
@@ -1181,35 +657,38 @@
     function renderContactList(users) {
       contactListDiv.innerHTML = '';
       const cu = getCurrentUser();
-
       if (users.length === 0) {
-        const emptyMsg = document.createElement('div');
-        emptyMsg.style.cssText = 'padding:30px;text-align:center;color:var(--text-secondary);';
-        emptyMsg.textContent = 'Henüz kayıtlı kullanıcı yok.';
-        contactListDiv.appendChild(emptyMsg);
+        contactListDiv.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-secondary);">Henüz kayıtlı kullanıcı yok.</div>';
         return;
       }
+
+      // Grup sohbetini başa ekle
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'contact-item';
+      groupDiv.innerHTML = `
+        <div class="contact-avatar" style="background:#128c7e;">👥</div>
+        <div class="contact-info">
+          <span class="contact-name">${GROUP_NAME}</span>
+          <div class="contact-status online">Grup • 2 üye</div>
+        </div>
+      `;
+      groupDiv.addEventListener('click', () => openChat(GROUP_CHAT_KEY));
+      contactListDiv.appendChild(groupDiv);
 
       users.forEach(u => {
         const isVerified = (u.username === VERIFIED_USER);
         const isLumina = (u.username === LUMINA_USERNAME);
         const isBugHunter = (u.username === BUGHUNTER_USER);
-        const avatarHTML = u.avatar
-          ? `<img src="${u.avatar}" alt="pf">`
-          : isLumina ? `<img src="${LUMINA_AVATAR_URL}" alt="pf">` : u.username.charAt(0).toUpperCase();
-        const bg = u.avatar ? 'transparent' : (isLumina ? 'transparent' : avatarColor(u.username));
+        const avatarHTML = u.avatar ? `<img src="${u.avatar}" alt="pf">` : u.username.charAt(0).toUpperCase();
+        const bg = u.avatar ? 'transparent' : avatarColor(u.username);
         const online = isLumina ? true : isUserOnline(u.username);
         const statusText = isLumina ? 'Lumina | Groq + Llama 3.3 70B' : (online ? 'çevrimiçi' : 'çevrimdışı');
         const statusClass = isLumina ? 'lumina-status' : (online ? 'online' : 'offline');
-
         const unread = getUnreadCount(cu.username, u.username);
-
         const div = document.createElement('div');
         div.className = 'contact-item';
         div.innerHTML = `
-          <div class="contact-avatar" style="background:${bg}" data-username="${u.username}">
-            ${avatarHTML}
-          </div>
+          <div class="contact-avatar" style="background:${bg}">${avatarHTML}</div>
           <div class="contact-info">
             <span class="contact-name name-with-badge">
               ${u.username}
@@ -1222,244 +701,218 @@
           </div>
           ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
         `;
-
-        const avatarEl = div.querySelector('.contact-avatar');
-        avatarEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showProfileCard(u.username);
-        });
-
-        div.addEventListener('click', (e) => {
-          if (!e.target.closest('.contact-avatar')) {
-            openChat(u.username);
-          }
-        });
-
+        div.addEventListener('click', () => openChat(u.username));
         contactListDiv.appendChild(div);
       });
     }
 
     searchInput.addEventListener('input', () => {
-      const cu = getCurrentUser();
-      if (!cu) return;
+      const cu = getCurrentUser(); if (!cu) return;
       const q = searchInput.value.toLowerCase();
       let users = getUsers().filter(u => u.username !== cu.username && u.username.toLowerCase().includes(q));
-      users.sort((a, b) => {
-        const msgsA = getMsgs(cu.username, a.username);
-        const msgsB = getMsgs(cu.username, b.username);
-        const timeA = msgsA.length ? msgsA[msgsA.length - 1].time : 0;
-        const timeB = msgsB.length ? msgsB[msgsB.length - 1].time : 0;
-        return timeB - timeA;
-      });
       renderContactList(users);
     });
 
     function openChat(partner) {
       chatPartner = partner;
-      const cu = getCurrentUser();
-      if (!cu) return;
-
-      resetUnread(cu.username, partner);
-
-      const partnerUser = getUsers().find(u => u.username === partner);
-      const initial = partner === LUMINA_USERNAME ? '' : partner.charAt(0).toUpperCase();
-      const avatarSrc = partnerUser?.avatar || (partner === LUMINA_USERNAME ? LUMINA_AVATAR_URL : null);
-      updateHeaderUI(partner, true, avatarSrc, initial, partner);
-      showScreen(chatScreen);
-      renderMessages();
+      const cu = getCurrentUser(); if (!cu) return;
+      if (partner !== GROUP_CHAT_KEY) resetUnread(cu.username, partner);
+      if (partner === GROUP_CHAT_KEY) {
+        updateHeaderUI(GROUP_NAME, true, null, '', GROUP_CHAT_KEY);
+      } else {
+        const partnerUser = getUsers().find(u => u.username === partner);
+        const initial = partner === LUMINA_USERNAME ? '' : partner.charAt(0).toUpperCase();
+        const avatarSrc = partnerUser?.avatar || null;
+        updateHeaderUI(partner, true, avatarSrc, initial, partner);
+      }
+      showScreen(chatScreen); renderMessages();
     }
 
     function renderMessages() {
-      const cu = getCurrentUser();
-      if (!cu || !chatPartner) return;
-      const msgs = getMsgs(cu.username, chatPartner);
+      const cu = getCurrentUser(); if (!cu || !chatPartner) return;
+      const msgs = chatPartner === GROUP_CHAT_KEY ? getGroupMsgs() : getMsgs(cu.username, chatPartner);
       chatMessages.innerHTML = '';
-
       msgs.forEach(m => {
         const time = new Date(m.time);
-        const hours = time.getHours().toString().padStart(2, '0');
-        const minutes = time.getMinutes().toString().padStart(2, '0');
-        const timeStr = `${hours}:${minutes}`;
-
+        const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+        const isMe = m.from === (cu?.username || '');
         const row = document.createElement('div');
-        row.className = `message-row ${m.from === cu.username ? 'outgoing' : 'incoming'}`;
+        row.className = `message-row ${isMe ? 'outgoing' : 'incoming'}`;
         row.innerHTML = `
-          <div class="message-bubble">
-            ${esc(m.text)}
-            <span class="message-time">${timeStr}</span>
-          </div>
+          ${chatPartner === GROUP_CHAT_KEY && !isMe ? `<span class="message-sender">${m.from}</span>` : ''}
+          <div class="message-bubble">${esc(m.text)}<span class="message-time">${timeStr}</span></div>
         `;
         chatMessages.appendChild(row);
       });
-
-      requestAnimationFrame(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
+      requestAnimationFrame(() => { chatMessages.scrollTop = chatMessages.scrollHeight; });
     }
 
-    sendBtn.addEventListener('click', sendMsg);
-    messageInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendMsg();
-    });
+    function getGroupMsgs() {
+      return JSON.parse(localStorage.getItem(GROUP_CHAT_KEY)) || [];
+    }
+
+    function saveGroupMsg(msg) {
+      const msgs = getGroupMsgs();
+      msgs.push(msg);
+      localStorage.setItem(GROUP_CHAT_KEY, JSON.stringify(msgs));
+    }
 
     async function sendMsg() {
       const text = messageInput.value.trim();
       if (!text || !chatPartner) return;
-      const cu = getCurrentUser();
-      if (!cu) return;
+      const cu = getCurrentUser(); if (!cu) return;
 
-      const msgs = getMsgs(cu.username, chatPartner);
-      msgs.push({ from: cu.username, text, time: Date.now() });
-      saveMsgs(cu.username, chatPartner, msgs);
-      messageInput.value = '';
-      renderMessages();
+      const msg = { from: cu.username, text, time: Date.now() };
+      if (chatPartner === GROUP_CHAT_KEY) {
+        saveGroupMsg(msg);
+      } else {
+        const msgs = getMsgs(cu.username, chatPartner);
+        msgs.push(msg); saveMsgs(cu.username, chatPartner, msgs);
+      }
+      messageInput.value = ''; renderMessages();
 
-      if (chatPartner === LUMINA_USERNAME) {
+      // Grup botları
+      if (chatPartner === GROUP_CHAT_KEY) {
+        const lowerText = text.toLowerCase();
+        const shouldAysheReply = lowerText.includes('ayşe') || !lowerText.includes('eymen');
+        const shouldEymenReply = lowerText.includes('eymen') || !lowerText.includes('ayşe');
+
+        if (shouldAysheReply) {
+          setTimeout(() => {
+            const reply = generateAysheReply(text);
+            saveGroupMsg({ from: 'Ayşe', text: reply, time: Date.now() }); renderMessages();
+          }, 800);
+        }
+        if (shouldEymenReply) {
+          setTimeout(() => {
+            const reply = generateEymenReply(text);
+            saveGroupMsg({ from: 'Eymen', text: reply, time: Date.now() }); renderMessages();
+          }, 1600);
+        }
+      } else if (chatPartner === LUMINA_USERNAME) {
         try {
           const response = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-API-Key': 'test-api-key-mira-001'
-            },
-            body: JSON.stringify({
-              message: text,
-              user: cu.username
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-api-key-mira-001' },
+            body: JSON.stringify({ message: text, user: cu.username })
           });
           const data = await response.json();
-          let reply = data.reply || data.message || 'Üzgünüm, şu anda yanıt veremiyorum.';
-          reply = reply.replace(/\*\*/g, '');
+          let reply = (data.reply || data.message || 'Üzgünüm...').replace(/\*\*/g, '');
           const updatedMsgs = getMsgs(cu.username, chatPartner);
           updatedMsgs.push({ from: LUMINA_USERNAME, text: reply, time: Date.now() });
-          saveMsgs(cu.username, chatPartner, updatedMsgs);
-          renderMessages();
-
-          showContactsScreen();
-          if (chatPartner) openChat(chatPartner);
+          saveMsgs(cu.username, chatPartner, updatedMsgs); renderMessages();
         } catch (err) {
           const updatedMsgs = getMsgs(cu.username, chatPartner);
-          updatedMsgs.push({ from: LUMINA_USERNAME, text: '⚠️ API bağlantı hatası. Lütfen tekrar deneyin.', time: Date.now() });
-          saveMsgs(cu.username, chatPartner, updatedMsgs);
-          renderMessages();
+          updatedMsgs.push({ from: LUMINA_USERNAME, text: '⚠️ API bağlantı hatası.', time: Date.now() });
+          saveMsgs(cu.username, chatPartner, updatedMsgs); renderMessages();
         }
       } else {
         incrementUnread(chatPartner, cu.username);
-        showContactsScreen();
-        openChat(chatPartner);
       }
+    }
+
+    function generateAysheReply(msg) {
+      const lower = msg.toLowerCase().replace(/[^a-z0-9ğüşıöç\s]/g, '');
+      if (lower.includes('nasılsın') || lower.includes('naber') || lower.includes('iyi misin')) {
+        const arr = ['İyiyim, seni sormalı!', 'Harika! Sen nasılsın?', 'Biraz yorgunum ama keyfim yerinde.'];
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      if (lower.includes('nerelisin') || lower.includes('nereden')) {
+        const arr = ['Ankaralıyım, sen?', 'İstanbul çocuğuyum :)', 'Aslen İzmirliyim, sen neredensin?'];
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      if (lower.includes('kaç yaşındasın') || lower.includes('yaşın')) {
+        return '20 yaşındayım, sen?';
+      }
+      if (lower.includes('adın ne') || lower.includes('ismin ne')) {
+        return 'Benim adım Ayşe, senin?';
+      }
+      if (lower.includes('sağol') || lower.includes('teşekkür')) {
+        return 'Rica ederim canım!';
+      }
+      if (lower.includes('görüşürüz') || lower.includes('bye')) {
+        return 'Bay bay, kendine iyi bak!';
+      }
+      if (lower.includes('ne yapıyorsun') || lower.includes('ne iş')) {
+        const arr = ['Şu an müzik dinliyorum, sen?', 'Ders çalışıyorum biraz.', 'Hiç, sıkıldım aslında.'];
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      const arr = ['Anlamadım, tekrar eder misin?', 'Hımm, ilginçmiş.', 'Kesinlikle katılıyorum!', 'Biraz daha açar mısın?'];
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateEymenReply(msg) {
+      const lower = msg.toLowerCase().replace(/[^a-z0-9ğüşıöç\s]/g, '');
+      if (lower.includes('nasılsın') || lower.includes('naber') || lower.includes('iyi misin')) {
+        const arr = ['Sağlam, senden naber?', 'Keyifler yerinde, sen?', 'Uyuya kaldım ya yeni kalktım :D'];
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      if (lower.includes('nerelisin') || lower.includes('nereden')) {
+        const arr = ['Bursalıyım, sen?', 'Trabzonlu dayı, sen?', 'Ankara, sen neredensin?'];
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      if (lower.includes('kaç yaşındasın') || lower.includes('yaşın')) {
+        return '23 yaşındayım, sen kaçsın?';
+      }
+      if (lower.includes('adın ne') || lower.includes('ismin ne')) {
+        return 'Eymen ben, senin adın ne?';
+      }
+      if (lower.includes('sağol') || lower.includes('teşekkür')) {
+        return 'Ne demek, her zaman!';
+      }
+      if (lower.includes('görüşürüz') || lower.includes('bye')) {
+        return 'Esenlikler dilerim!';
+      }
+      if (lower.includes('ne yapıyorsun') || lower.includes('ne iş')) {
+        const arr = ['Oyun oynuyorum, sen?', 'Film izliyordum.', 'Yeni çıkan bir diziye başladım.'];
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      const arr = ['Nasıl yani?', 'Hmm, öyle mi?', 'Valla ben de onu diyecektim.', 'Katılıyorum sana.'];
+      return arr[Math.floor(Math.random() * arr.length)];
     }
 
     function esc(s) {
       return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
     }
-
     function avatarColor(name) {
       const colors = ['#075e54','#128c7e','#25d366','#1ebc56','#0b5e42','#2e7d32','#388e3c','#4caf50'];
-      let hash = 0;
-      for (let i=0; i<name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      let hash = 0; for (let i=0; i<name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
       return colors[Math.abs(hash) % colors.length];
     }
 
     settingsBtn.addEventListener('click', () => {
-      const cu = getCurrentUser();
-      if (!cu) return;
-      settingsUsername.textContent = cu.username;
-      settingsPhone.textContent = cu.phone;
-      avatarPreview.innerHTML = '';
-      if (cu.avatar) {
-        avatarPreview.innerHTML = `<img src="${cu.avatar}" alt="pf">`;
-      } else {
-        avatarPreview.textContent = cu.username.charAt(0).toUpperCase();
-        avatarPreview.style.background = avatarColor(cu.username);
-      }
-      tempAvatarData = cu.avatar;
-      darkModeCheckbox.checked = document.body.classList.contains('dark');
+      const cu = getCurrentUser(); if (!cu) return;
+      settingsUsername.textContent = cu.username; settingsPhone.textContent = cu.phone;
+      avatarPreview.innerHTML = cu.avatar ? `<img src="${cu.avatar}" alt="pf">` : cu.username.charAt(0).toUpperCase();
+      avatarPreview.style.background = cu.avatar ? 'transparent' : avatarColor(cu.username);
+      tempAvatarData = cu.avatar; darkModeCheckbox.checked = document.body.classList.contains('dark');
       settingsModal.classList.add('show');
     });
-
-    closeSettingsBtn.addEventListener('click', () => {
-      settingsModal.classList.remove('show');
-    });
-
-    chooseAvatarBtn.addEventListener('click', () => {
-      avatarFileInput.click();
-    });
-
+    closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('show'));
+    chooseAvatarBtn.addEventListener('click', () => avatarFileInput.click());
     avatarFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(ev) {
-        tempAvatarData = ev.target.result;
-        avatarPreview.innerHTML = `<img src="${tempAvatarData}" alt="pf">`;
-      };
+      reader.onload = (ev) => { tempAvatarData = ev.target.result; avatarPreview.innerHTML = `<img src="${tempAvatarData}" alt="pf">`; };
       reader.readAsDataURL(file);
     });
-
     removeAvatarBtn.addEventListener('click', () => {
-      tempAvatarData = null;
-      avatarPreview.innerHTML = '';
-      const cu = getCurrentUser();
-      avatarPreview.textContent = cu.username.charAt(0).toUpperCase();
-      avatarPreview.style.background = avatarColor(cu.username);
+      tempAvatarData = null; avatarPreview.innerHTML = getCurrentUser().username.charAt(0).toUpperCase();
+      avatarPreview.style.background = avatarColor(getCurrentUser().username);
     });
-
     saveSettingsBtn.addEventListener('click', () => {
-      const cu = getCurrentUser();
-      if (!cu) return;
-      cu.avatar = tempAvatarData;
-      updateCurrentUser(cu);
-      settingsModal.classList.remove('show');
-      showContactsScreen();
-      if (chatPartner) {
-        openChat(chatPartner);
-      }
+      const cu = getCurrentUser(); if (!cu) return;
+      cu.avatar = tempAvatarData; updateCurrentUser(cu); settingsModal.classList.remove('show');
+      showContactsScreen(); if (chatPartner) openChat(chatPartner);
     });
 
     (function init() {
       let users = getUsers();
-
-      const bacon = users.find(u => u.username === VERIFIED_USER);
-      if (!bacon) {
-        users.push({
-          username: VERIFIED_USER,
-          password: 'Bacon2024!',
-          phone: '+1 555 000 0001',
-          avatar: null
-        });
-      } else {
-        if (!bacon.phone || bacon.phone.startsWith('+90')) {
-          bacon.phone = '+1 555 000 0001';
-        }
-      }
-
-      if (!users.some(u => u.username === LUMINA_USERNAME)) {
-        users.push({
-          username: LUMINA_USERNAME,
-          password: '',
-          phone: '',
-          avatar: LUMINA_AVATAR_URL
-        });
-      } else {
-        const lumina = users.find(u => u.username === LUMINA_USERNAME);
-        if (lumina) {
-          lumina.phone = '';
-          lumina.avatar = LUMINA_AVATAR_URL;
-        }
-      }
-
+      if (!users.find(u => u.username === VERIFIED_USER)) users.push({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null });
+      if (!users.find(u => u.username === LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL });
       saveUsers(users);
-
       const cu = getCurrentUser();
-      if (cu) {
-        setUserOnline(cu.username);
-        setUserOnline(LUMINA_USERNAME);
-        enterApp();
-      } else {
-        showScreen(authScreen);
-        appHeader.classList.remove('visible');
-      }
+      if (cu) { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); enterApp(); }
+      else { showScreen(authScreen); appHeader.classList.remove('visible'); }
     })();
   </script>
 </body>
