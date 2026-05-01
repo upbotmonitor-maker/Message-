@@ -695,22 +695,19 @@
       flex-shrink: 0;
     }
 
-    /* Bug Hunter rozeti */
     .bug-hunter-badge {
       display: inline-flex;
       align-items: center;
       vertical-align: middle;
       margin-left: 4px;
-      background: #ff6b35;
-      color: white;
-      font-size: 0.65rem;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 12px;
-      letter-spacing: 1px;
       pointer-events: none;
       user-select: none;
       flex-shrink: 0;
+    }
+    .bug-hunter-badge img {
+      width: 23px;
+      height: 23px;
+      object-fit: contain;
     }
 
     .lumina-status {
@@ -928,6 +925,7 @@
     const BUGHUNTER_USER = 'Root_Overseer';
     const LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png';
+    const BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
 
     // ==================== UI ====================
     const appHeader = document.getElementById('appHeader');
@@ -1021,7 +1019,7 @@
       } else if (partnerUsername === LUMINA_USERNAME) {
         headerTitle.innerHTML = `${partnerUsername} <span class="ai-badge">AI</span>`;
       } else if (partnerUsername === BUGHUNTER_USER) {
-        headerTitle.innerHTML = `${partnerUsername} <span class="bug-hunter-badge">🛡️ Bug Hunter</span>`;
+        headerTitle.innerHTML = `${partnerUsername} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}" alt="Bug Hunter"></span>`;
       } else {
         headerTitle.textContent = titleText;
       }
@@ -1054,7 +1052,7 @@
       } else if (user.username === LUMINA_USERNAME) {
         profileBadge.innerHTML = '<span class="ai-badge">AI</span>';
       } else if (user.username === BUGHUNTER_USER) {
-        profileBadge.innerHTML = '<span class="bug-hunter-badge">🛡️ Bug Hunter</span>';
+        profileBadge.innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}" alt="Bug Hunter" style="width:23px;height:23px;"></span>`;
       } else {
         profileBadge.innerHTML = '';
       }
@@ -1217,7 +1215,7 @@
               ${u.username}
               ${isVerified ? '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>' : ''}
               ${isLumina ? '<span class="ai-badge">AI</span>' : ''}
-              ${isBugHunter ? '<span class="bug-hunter-badge">🛡️ Bug Hunter</span>' : ''}
+              ${isBugHunter ? `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}" alt="Bug Hunter"></span>` : ''}
             </span>
             <div class="contact-phone">${u.phone || ''}</div>
             <div class="contact-status ${statusClass}">${statusText}</div>
