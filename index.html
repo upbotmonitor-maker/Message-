@@ -110,6 +110,14 @@
     .gold-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; pointer-events: none; user-select: none; flex-shrink: 0; }
     .gold-badge img { width: 23px; height: 23px; object-fit: contain; }
     .lumina-status { color: #25d366 !important; font-weight: 500; font-style: italic; }
+    /* Kurumsal profil kartı stilleri */
+    .corporate-profile-header { background: linear-gradient(135deg, #1a1a3e, #4a1a6b); padding: 20px; text-align: center; border-radius: 16px 16px 0 0; }
+    .corporate-profile-logo { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; background: white; display: flex; align-items: center; justify-content: center; }
+    .corporate-profile-logo img { width: 70%; height: 70%; object-fit: contain; }
+    .corporate-profile-info { padding: 20px; text-align: left; }
+    .corporate-profile-info p { margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem; }
+    .corporate-profile-info .bio { font-weight: 500; color: var(--text); }
+    .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
 </head>
@@ -216,14 +224,7 @@
     </div>
 
     <div id="profileModal" class="modal-overlay">
-      <div class="profile-card">
-        <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
-        <div class="profile-avatar-large" id="profileAvatarLarge"></div>
-        <h2 id="profileName"></h2>
-        <div id="profileBadge" style="margin-bottom:6px;"></div>
-        <p id="profilePhone"></p>
-        <p id="profileStatus" style="color:#667781; font-size:0.9rem;"></p>
-      </div>
+      <div class="profile-card" id="profileCardContent"></div>
     </div>
   </div>
 
@@ -231,7 +232,9 @@
     const USERS_KEY = 'cv_users', MESSAGES_PREFIX = 'cv_msg_', CURRENT_USER_KEY = 'cv_current', ONLINE_USERS_KEY = 'cv_online', DARK_MODE_KEY = 'cv_dark';
     const VERIFIED_USER = 'BaconPrime_Dev', BUGHUNTER_USER = 'Root_Overseer', LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png', BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
-    const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png'; // Yeni altın rozet
+    const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
+    const IOBROWSER_USER = 'IoBrowser';
+    const IOBROWSER_LOGO = 'https://upbotmonitor-maker.github.io/IoBrowser/logo.png';
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -261,7 +264,7 @@
     const authTitle = document.getElementById('authTitle'), usernameInput = document.getElementById('usernameInput'), passwordInput = document.getElementById('passwordInput'), authActionBtn = document.getElementById('authActionBtn'), switchText = document.getElementById('switchText'), switchLink = document.getElementById('switchLink');
     const searchInput = document.getElementById('searchInput'), contactListDiv = document.getElementById('contactList'), chatMessages = document.getElementById('chatMessages'), messageInput = document.getElementById('messageInput'), sendBtn = document.getElementById('sendBtn');
     const settingsModal = document.getElementById('settingsModal'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), avatarPreview = document.getElementById('avatarPreview'), avatarFileInput = document.getElementById('avatarFileInput'), chooseAvatarBtn = document.getElementById('chooseAvatarBtn'), removeAvatarBtn = document.getElementById('removeAvatarBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), settingsUsername = document.getElementById('settingsUsername'), settingsPhone = document.getElementById('settingsPhone'), darkModeCheckbox = document.getElementById('darkModeCheckbox');
-    const profileModal = document.getElementById('profileModal'), closeProfileBtn = document.getElementById('closeProfileBtn'), profileAvatarLarge = document.getElementById('profileAvatarLarge'), profileName = document.getElementById('profileName'), profileBadge = document.getElementById('profileBadge'), profilePhone = document.getElementById('profilePhone'), profileStatus = document.getElementById('profileStatus');
+    const profileModal = document.getElementById('profileModal'), closeProfileBtn = document.getElementById('closeProfileBtn'), profileCardContent = document.getElementById('profileCardContent');
 
     let isLogin = true, chatPartner = null, tempAvatarData = null;
 
@@ -278,28 +281,65 @@
       if (partnerUsername === VERIFIED_USER) headerTitle.innerHTML = `${partnerUsername} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>`;
       else if (partnerUsername === LUMINA_USERNAME) headerTitle.innerHTML = `${partnerUsername} <span class="ai-badge">AI</span>`;
       else if (partnerUsername === BUGHUNTER_USER) headerTitle.innerHTML = `${partnerUsername} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}" alt="Bug Hunter"></span>`;
-      else if (partnerUsername === 'browser') headerTitle.innerHTML = `Browser <span class="gold-badge"><img src="${GOLD_BADGE_URL}" alt="Altın"></span>`;
+      else if (partnerUsername === IOBROWSER_USER) headerTitle.innerHTML = `${partnerUsername} <span class="gold-badge"><img src="${GOLD_BADGE_URL}" alt="Altın"></span>`;
       else headerTitle.textContent = titleText;
       backBtn.classList.toggle('show', showBack);
       if (avatarSrc) { headerAvatar.innerHTML = `<img src="${avatarSrc}" alt="pf">`; headerAvatar.classList.add('show'); }
       else if (initial) { headerAvatar.innerHTML = ''; headerAvatar.textContent = initial; headerAvatar.classList.add('show'); }
-      else if (partnerUsername === 'browser') { headerAvatar.innerHTML = '🌐'; headerAvatar.classList.add('show'); }
+      else if (partnerUsername === IOBROWSER_USER) { headerAvatar.innerHTML = `<img src="${IOBROWSER_LOGO}" alt="pf">`; headerAvatar.classList.add('show'); }
       else headerAvatar.classList.remove('show');
-      headerAvatar.onclick = () => { if (partnerUsername && partnerUsername !== 'browser') showProfileCard(partnerUsername); };
+      headerAvatar.onclick = () => { if (partnerUsername) showProfileCard(partnerUsername); };
     }
 
     function showProfileCard(username) {
-      const user = getUsers().find(u => u.username === username); if (!user) return;
-      profileName.textContent = user.username; profilePhone.textContent = user.phone || '—';
-      if (user.username === VERIFIED_USER) profileBadge.innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>';
-      else if (user.username === LUMINA_USERNAME) profileBadge.innerHTML = '<span class="ai-badge">AI</span>';
-      else if (user.username === BUGHUNTER_USER) profileBadge.innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
-      else profileBadge.innerHTML = '';
-      profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
-      profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
+      const user = getUsers().find(u => u.username === username);
+      if (!user) return;
+      
+      if (username === IOBROWSER_USER) {
+        // Özel IoBrowser kurumsal profili
+        profileCardContent.innerHTML = `
+          <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
+          <div class="corporate-profile-header">
+            <div class="corporate-profile-logo"><img src="${IOBROWSER_LOGO}" alt="IoBrowser"></div>
+            <h2 style="color:white;">IoBrowser <span class="gold-badge"><img src="${GOLD_BADGE_URL}" style="width:23px;height:23px;"></span></h2>
+          </div>
+          <div class="corporate-profile-info">
+            <p class="bio">IoBrowser – Özgür İnternet Deneyimi</p>
+            <p class="bio">Gelişmiş proxy • Reklamsız • Hızlı</p>
+            <p class="bio">Resmî hesap</p>
+            <p>🌐 <a href="https://upbotmonitor-maker.github.io/IoBrowser/" target="_blank" class="corporate-profile-link">Web Sitesini Ziyaret Et</a></p>
+            <p>📧 ibrowser.iletisim@gmail.com</p>
+          </div>
+        `;
+      } else {
+        // Standart profil kartı
+        profileCardContent.innerHTML = `
+          <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
+          <div class="profile-avatar-large" id="profileAvatarLarge"></div>
+          <h2 id="profileName"></h2>
+          <div id="profileBadge" style="margin-bottom:6px;"></div>
+          <p id="profilePhone"></p>
+          <p id="profileStatus" style="color:#667781; font-size:0.9rem;"></p>
+        `;
+        const profileAvatarLarge = document.getElementById('profileAvatarLarge');
+        const profileName = document.getElementById('profileName');
+        const profileBadge = document.getElementById('profileBadge');
+        const profilePhone = document.getElementById('profilePhone');
+        const profileStatus = document.getElementById('profileStatus');
+        
+        profileName.textContent = user.username;
+        profilePhone.textContent = user.phone || '—';
+        if (user.username === VERIFIED_USER) profileBadge.innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>';
+        else if (user.username === LUMINA_USERNAME) profileBadge.innerHTML = '<span class="ai-badge">AI</span>';
+        else if (user.username === BUGHUNTER_USER) profileBadge.innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
+        else profileBadge.innerHTML = '';
+        profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
+        profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
+      }
+      
+      document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       profileModal.classList.add('show');
     }
-    closeProfileBtn.addEventListener('click', ()=> profileModal.classList.remove('show'));
     profileModal.addEventListener('click', e => { if (e.target === profileModal) profileModal.classList.remove('show'); });
 
     switchLink.addEventListener('click', e => {
@@ -328,7 +368,7 @@
       const cu = getCurrentUser(); if(cu) setUserOffline(cu.username);
       clearCurrentUser(); chatPartner = null; showScreen(authScreen); appHeader.classList.remove('visible');
     });
-    backBtn.addEventListener('click', ()=>{ if(chatPartner && chatPartner!=='browser') resetUnread(getCurrentUser().username, chatPartner); chatPartner=null; showContactsScreen(); });
+    backBtn.addEventListener('click', ()=>{ if(chatPartner) resetUnread(getCurrentUser().username, chatPartner); chatPartner=null; showContactsScreen(); });
     window.addEventListener('beforeunload', ()=>{ const cu = getCurrentUser(); if(cu) setUserOffline(cu.username); });
 
     function enterApp() { appHeader.classList.add('visible'); showContactsScreen(); }
@@ -348,24 +388,18 @@
 
     function renderContactList(users) {
       contactListDiv.innerHTML = '';
-      // Browser kartı (altın rozetli)
-      const browserDiv = document.createElement('div');
-      browserDiv.className = 'contact-item';
-      browserDiv.innerHTML = `<div class="contact-avatar" style="background:#4285F4;">🌐</div><div class="contact-info"><span class="contact-name name-with-badge">Browser <span class="gold-badge"><img src="${GOLD_BADGE_URL}" alt="Altın"></span></span><div class="contact-status" style="color:#4285F4;">Doğrulanmış Partner</div></div>`;
-      browserDiv.addEventListener('click', ()=> alert('🌐 Browser yakında aktif!'));
-      contactListDiv.appendChild(browserDiv);
-
-      if (!users.length) { contactListDiv.innerHTML += '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>'; return; }
+      
+      if (!users.length) { contactListDiv.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>'; return; }
       users.forEach(u => {
-        const isVerified = u.username === VERIFIED_USER, isLumina = u.username === LUMINA_USERNAME, isBugHunter = u.username === BUGHUNTER_USER;
-        const avHtml = u.avatar ? `<img src="${u.avatar}">` : u.username.charAt(0).toUpperCase();
-        const bg = u.avatar ? 'transparent' : avatarColor(u.username);
-        const online = isLumina || isUserOnline(u.username);
-        const statusText = isLumina ? 'Lumina | Groq + Llama 3.3 70B' : (online ? 'çevrimiçi' : 'çevrimdışı');
+        const isVerified = u.username === VERIFIED_USER, isLumina = u.username === LUMINA_USERNAME, isBugHunter = u.username === BUGHUNTER_USER, isIoBrowser = u.username === IOBROWSER_USER;
+        const avHtml = isIoBrowser ? `<img src="${IOBROWSER_LOGO}">` : (u.avatar ? `<img src="${u.avatar}">` : u.username.charAt(0).toUpperCase());
+        const bg = isIoBrowser ? 'transparent' : (u.avatar ? 'transparent' : avatarColor(u.username));
+        const online = isLumina || isIoBrowser || isUserOnline(u.username);
+        const statusText = isLumina ? 'Lumina | Groq + Llama 3.3 70B' : (isIoBrowser ? 'IoBrowser – Özgür İnternet Deneyimi' : (online ? 'çevrimiçi' : 'çevrimdışı'));
         const statusClass = isLumina ? 'lumina-status' : (online ? 'online' : 'offline');
         const unread = getUnreadCount(getCurrentUser().username, u.username);
         const div = document.createElement('div'); div.className = 'contact-item';
-        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${avHtml}</div><div class="contact-info"><span class="contact-name name-with-badge">${u.username}${isVerified?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''}${isLumina?'<span class="ai-badge">AI</span>':''}${isBugHunter?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''}</span><div class="contact-phone">${u.phone||''}</div><div class="contact-status ${statusClass}">${statusText}</div></div>${unread>0?`<div class="unread-badge">${unread}</div>`:''}`;
+        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${avHtml}</div><div class="contact-info"><span class="contact-name name-with-badge">${u.username}${isVerified?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''}${isLumina?'<span class="ai-badge">AI</span>':''}${isBugHunter?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''}${isIoBrowser?`<span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`:''}</span><div class="contact-phone">${u.phone||''}</div><div class="contact-status ${statusClass}">${statusText}</div></div>${unread>0?`<div class="unread-badge">${unread}</div>`:''}`;
         div.addEventListener('click', ()=> openChat(u.username));
         contactListDiv.appendChild(div);
       });
@@ -379,7 +413,6 @@
     });
 
     function openChat(partner) {
-      if (partner === 'browser') return;
       chatPartner = partner; const cu = getCurrentUser(); if (!cu) return;
       resetUnread(cu.username, partner);
       const partnerUser = getUsers().find(u => u.username === partner);
@@ -449,9 +482,10 @@
       let users = getUsers();
       if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
       if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
+      if (!users.find(u=>u.username===IOBROWSER_USER)) users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO });
       saveUsers(users);
       const cu = getCurrentUser();
-      if (cu) { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); enterApp(); }
+      if (cu) { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); setUserOnline(IOBROWSER_USER); enterApp(); }
       else { showScreen(authScreen); appHeader.classList.remove('visible'); }
     })();
   </script>
