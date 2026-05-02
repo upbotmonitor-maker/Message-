@@ -271,7 +271,7 @@
     const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
     // Yasaklı anahtar kelimeler (büyük/küçük harf duyarsız)
-    const BANNED_KEYWORDS = ['google', 'meta', 'tost', 'facebook', 'apple', 'microsoft', 'amazon'];
+    const BANNED_KEYWORDS = ['google', 'meta', 'tost', 'facebook', 'apple', 'microsoft', 'amazon', 'root'];
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -309,6 +309,13 @@
     function isBlocked(currentUser, targetUser) { return getBlockedList(currentUser).includes(targetUser); }
 
     function getBannedUsers() { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY)) || []; }
+    function banUser(username) {
+      const banned = getBannedUsers();
+      if (!banned.includes(username)) {
+        banned.push(username);
+        localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
+      }
+    }
     function isUserBanned(username) { return getBannedUsers().includes(username); }
 
     function isUsernameForbidden(username) {
@@ -585,21 +592,18 @@
       let wrongIo = users.find(u=>u.username==='loBrowser');
       if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
 
-      // Mevcut yasaklı kelimeleri içeren kullanıcıları da banla
+      // Mevcut yasaklı kelimeleri içeren kullanıcıları banla
       users.forEach(u => {
-        if (isUsernameForbidden(u.username) && !getBannedUsers().includes(u.username)) {
-          let banned = getBannedUsers();
-          banned.push(u.username);
-          localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
+        if (isUsernameForbidden(u.username)) {
+          banUser(u.username);
         }
       });
+      
+      // Özel olarak bilinen sahte hesapları da banla
+      const knownTrolls = ['Görünmez_Tost_Makinesi', 'Görünmez_Tost_Makine', 'Google', 'Meta', 'Root_Authority'];
+      knownTrolls.forEach(troll => banUser(troll));
+      
       saveUsers(users);
-
-      let banned = getBannedUsers();
-      if (!banned.includes('Görünmez_Tost_Makinesi')) {
-        banned.push('Görünmez_Tost_Makinesi');
-        localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
-      }
 
       const cu = getCurrentUser();
       if (cu) {
