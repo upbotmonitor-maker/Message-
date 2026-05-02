@@ -97,8 +97,8 @@
     .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
     input:checked + .slider { background-color: #25d366; }
     input:checked + .slider:before { transform: translateX(22px); }
-    .profile-card { background: var(--card-bg); width: 88%; max-width: 350px; border-radius: 20px; padding: 24px 16px; text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .profile-close { position: absolute; top: 8px; right: 14px; color: var(--text) !important; font-size: 28px; }
+    .profile-card { background: var(--card-bg); width: 88%; max-width: 350px; border-radius: 20px; padding: 0; text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; }
+    .profile-close { position: absolute; top: 8px; right: 14px; color: white !important; font-size: 28px; z-index: 10; }
     .profile-avatar-large { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 14px; background: #075e54; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; font-weight: bold; overflow: hidden; }
     .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
     .verified-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 2px; flex-shrink: 0; }
@@ -110,10 +110,10 @@
     .gold-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; pointer-events: none; user-select: none; flex-shrink: 0; }
     .gold-badge img { width: 23px; height: 23px; object-fit: contain; }
     .lumina-status { color: #25d366 !important; font-weight: 500; font-style: italic; }
-    .corporate-profile-header { background: linear-gradient(135deg, #1a1a3e, #4a1a6b); padding: 20px; text-align: center; border-radius: 16px 16px 0 0; }
-    .corporate-profile-logo { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; background: white; display: flex; align-items: center; justify-content: center; }
-    .corporate-profile-logo img { width: 70%; height: 70%; object-fit: contain; }
-    .corporate-profile-info { padding: 20px; text-align: left; }
+    .corporate-profile-header { background: linear-gradient(135deg, #1a1a3e, #4a1a6b); padding: 20px; text-align: center; }
+    .corporate-profile-logo { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .corporate-profile-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .corporate-profile-info { padding: 20px; text-align: left; background: var(--card-bg); }
     .corporate-profile-info p { margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem; }
     .corporate-profile-info .bio { font-weight: 500; color: var(--text); }
     .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
@@ -233,7 +233,7 @@
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png', BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser';
-    const IOBROWSER_LOGO = 'https://upbotmonitor-maker.github.io/IoBrowser/logo.png';
+    const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg'; // IoBrowser'ın kendi logosu
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -479,7 +479,7 @@
       let users = getUsers();
       if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
       if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
-      // IoBrowser varsa düzelt, yoksa ekle
+      // IoBrowser'ı garantile
       let io = users.find(u=>u.username===IOBROWSER_USER);
       if (io) {
         io.phone = '';
@@ -487,7 +487,7 @@
       } else {
         users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO });
       }
-      // Yanlış isimle kayıtlı olanı düzelt (loBrowser -> IoBrowser)
+      // Yanlış isimle kayıtlı olanı düzelt
       let wrongIo = users.find(u=>u.username==='loBrowser');
       if (wrongIo) {
         wrongIo.username = IOBROWSER_USER;
