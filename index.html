@@ -271,7 +271,11 @@
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
-    const BANNED_KEYWORDS = ['google', 'meta', 'tost', 'facebook', 'apple', 'microsoft', 'amazon', 'root', 'cloudflare', 'güvenlik', 'admin', 'moderator'];
+    // Anahtar kelime filtresi TAMAMEN KALDIRILDI
+    const BANNED_KEYWORDS = [];
+
+    // AI moderasyondan MUAF özel hesaplar (asla banlanmaz)
+    const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER];
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -310,6 +314,7 @@
 
     function getBannedUsers() { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY)) || []; }
     function banUser(username) {
+      if (MODERATION_IMMUNE.includes(username)) return;
       const banned = getBannedUsers();
       if (!banned.includes(username)) {
         banned.push(username);
@@ -319,14 +324,15 @@
     function isUserBanned(username) { return getBannedUsers().includes(username); }
 
     function isUsernameForbidden(username) {
+      if (BANNED_KEYWORDS.length === 0) return false;
       const lower = username.toLowerCase();
       return BANNED_KEYWORDS.some(keyword => lower.includes(keyword));
     }
 
-    // AI destekli moderasyon
     const LUMINA_MODERATION_ENABLED = true;
     async function aiModerateContent(content, username) {
       if (!LUMINA_MODERATION_ENABLED) return false;
+      if (MODERATION_IMMUNE.includes(username)) return false;
       const prompt = `Aşağıdaki mesajı incele. Eğer tehdit, taciz, spam, dolandırıcılık, yetkisiz resmiyet taklidi veya platform kurallarını ihlal eden bir içerikse "EVET" yaz, değilse "HAYIR". Sadece EVET veya HAYIR yanıtı ver.\n\nMesaj: "${content}"`;
       try {
         const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
@@ -338,7 +344,7 @@
         const answer = (data.reply || data.message || '').trim().toUpperCase();
         return answer.includes('EVET');
       } catch (e) {
-        return false; // bağlantı hatasında banlama
+        return false;
       }
     }
 
@@ -456,11 +462,6 @@
         setUserOnline(user.username); enterApp();
       } else {
         if (users.some(u => u.username === username)) return alert('Kullanıcı adı alınmış.');
-        // AI kullanıcı adı kontrolü
-        if (LUMINA_MODERATION_ENABLED) {
-          const harmful = await aiModerateContent(username, '');
-          if (harmful) return alert('Bu kullanıcı adı güvenlik politikamıza uygun değil.');
-        }
         const newUser = { username, password, phone: randomPhone(), avatar: null };
         users.push(newUser); saveUsers(users); saveCurrentUser(newUser); setUserOnline(newUser.username);
         alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`); enterApp();
@@ -468,7 +469,7 @@
       usernameInput.value = ''; passwordInput.value = '';
     });
 
-    bannedAppealBtn.addEventListener('click', () => alert('İtirazınız alındı. En kısa sürede incelenecektir.\n\nE-posta: destek@chatverse.com'));
+    bannedAppealBtn.addEventListener('click', () => alert('İtirazınız alındı.\n\nE-posta: destek@chatverse.com'));
     bannedLogoutBtn.addEventListener('click', () => { clearCurrentUser(); showScreen(authScreen); appHeader.classList.remove('visible'); });
 
     logoutBtn.addEventListener('click', ()=>{
@@ -547,8 +548,8 @@
       if (isUserBanned(chatPartner)) { alert('Bu kullanıcı yasaklanmış.'); return; }
       if (isBlocked(cu.username, chatPartner)) { alert('Engellenmiş kullanıcı.'); return; }
 
-      // AI moderasyon
-      if (LUMINA_MODERATION_ENABLED && cu.username !== VERIFIED_USER && cu.username !== BUGHUNTER_USER) {
+      // AI moderasyon - muaf hesaplar korunur
+      if (LUMINA_MODERATION_ENABLED && !MODERATION_IMMUNE.includes(cu.username)) {
         const harmful = await aiModerateContent(text, cu.username);
         if (harmful) {
           banUser(cu.username);
@@ -622,9 +623,6 @@
       let wrongIo = users.find(u=>u.username==='loBrowser');
       if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
 
-      users.forEach(u => { if (isUsernameForbidden(u.username)) banUser(u.username); });
-      const knownTrolls = ['Görünmez_Tost_Makinesi', 'Görünmez_Tost_Makine', 'Google', 'Meta', 'Root', 'Root_Authority', 'Cloudflare', 'Cloudflare_Security'];
-      knownTrolls.forEach(t => banUser(t));
       saveUsers(users);
 
       const cu = getCurrentUser();
