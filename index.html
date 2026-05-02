@@ -120,16 +120,43 @@
     .block-btn { background: #ff4d4f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .unblock-btn { background: #25d366; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
 
-    /* ===== BAN EKRANI STİLLERİ ===== */
-    .banned-screen { background: var(--bg); justify-content: center; align-items: center; padding: 30px 20px; text-align: center; }
-    .banned-icon-container { position: relative; width: 100px; height: 100px; margin: 0 auto 24px; }
-    .banned-icon { width: 100%; height: 100%; border-radius: 50%; background: #ff4d4f; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; }
-    body.dark .banned-icon { background: #e53935; }
-    .banned-title { font-size: 1.3rem; font-weight: 600; color: var(--text); margin-bottom: 12px; line-height: 1.4; }
-    .banned-message { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
-    .banned-appeal-btn { background: var(--header-bg); color: white; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-bottom: 16px; width: 80%; max-width: 300px; }
-    .banned-appeal-btn:hover { opacity: 0.9; }
-    .banned-logout-btn { background: none; border: 1px solid var(--border); color: var(--text-secondary); padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer; width: 80%; max-width: 300px; }
+    /* Ban ekranı – WhatsApp tarzı sade ekran */
+    .banned-fullscreen {
+      background: #f0f2f5;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px 30px;
+      gap: 16px;
+    }
+    body.dark .banned-fullscreen { background: #0b141a; }
+    .banned-icon {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: #ff4d4f; color: white; font-size: 3rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .banned-title {
+      font-size: 1.3rem; font-weight: 600; color: #111;
+      line-height: 1.4;
+    }
+    body.dark .banned-title { color: #e9edef; }
+    .banned-desc {
+      font-size: 0.9rem; color: #667781; line-height: 1.5;
+      max-width: 300px;
+    }
+    .banned-appeal {
+      background: #075e54; color: white; border: none;
+      padding: 12px 24px; border-radius: 25px;
+      font-weight: bold; font-size: 0.9rem; cursor: pointer;
+      margin-top: 8px;
+    }
+    .banned-logout {
+      background: none; border: 1px solid #667781; color: #667781;
+      padding: 10px 24px; border-radius: 25px; font-weight: bold;
+      font-size: 0.85rem; cursor: pointer;
+    }
 
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
@@ -204,18 +231,16 @@
       </div>
     </div>
 
-    <!-- YENİ: BAN EKRANI -->
-    <div id="bannedScreen" class="screen banned-screen">
-      <div class="banned-icon-container">
-        <div class="banned-icon">🚫</div>
-      </div>
-      <h2 class="banned-title">Bu hesap artık Chatverse uygulamasını kullanamaz</h2>
-      <p class="banned-message">
+    <!-- BAN EKRANI (WhatsApp benzeri, sade) -->
+    <div id="bannedScreen" class="screen banned-fullscreen">
+      <div class="banned-icon">🚫</div>
+      <h2 class="banned-title">Bu hesap Chatverse'i kullanamaz</h2>
+      <p class="banned-desc">
         Hesap etkinliğinizin Hizmet Şartlarımızı ihlal ettiğini tespit ettik.
-        Hesabınız süresiz olarak askıya alınmıştır.
+        Hesabınız askıya alınmıştır.
       </p>
-      <button class="banned-appeal-btn" id="bannedAppealBtn">Gözden geçirme iste</button>
-      <button class="banned-logout-btn" id="bannedLogoutBtn">Çıkış Yap</button>
+      <button class="banned-appeal" id="bannedAppealBtn">Gözden geçirme iste</button>
+      <button class="banned-logout" id="bannedLogoutBtn">Çıkış Yap</button>
     </div>
 
     <div id="settingsModal" class="modal-overlay">
@@ -261,13 +286,11 @@
 
   <script>
     const USERS_KEY = 'cv_users', MESSAGES_PREFIX = 'cv_msg_', CURRENT_USER_KEY = 'cv_current', ONLINE_USERS_KEY = 'cv_online', DARK_MODE_KEY = 'cv_dark';
-    const BLOCKED_KEY = 'cv_blocked_';
-    const BANNED_USERS_KEY = 'cv_banned_users';
+    const BLOCKED_KEY = 'cv_blocked_', BANNED_USERS_KEY = 'cv_banned_users';
     const VERIFIED_USER = 'BaconPrime_Dev', BUGHUNTER_USER = 'Root_Overseer', LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png', BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
-    const IOBROWSER_USER = 'IoBrowser';
-    const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
+    const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -304,7 +327,6 @@
     }
     function isBlocked(currentUser, targetUser) { return getBlockedList(currentUser).includes(targetUser); }
 
-    // Global Ban fonksiyonları
     function getBannedUsers() { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY)) || []; }
     function isUserBanned(username) { return getBannedUsers().includes(username); }
 
@@ -418,8 +440,7 @@
         if (!user) return alert('Hatalı giriş.');
         saveCurrentUser(user);
         if (isUserBanned(username)) {
-          showScreen(bannedScreen);
-          appHeader.classList.remove('visible');
+          showScreen(bannedScreen); appHeader.classList.remove('visible');
         } else {
           setUserOnline(user.username); enterApp();
         }
@@ -489,6 +510,7 @@
 
     function openChat(partner) {
       const cu = getCurrentUser(); if (!cu) return;
+      if (isUserBanned(partner)) { alert('Bu kullanıcı platformdan yasaklanmıştır.'); return; }
       if (isBlocked(cu.username, partner)) { alert('Bu kullanıcıyı engellediğiniz için mesajlaşamazsınız.'); return; }
       if (isBlocked(partner, cu.username)) { alert('Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.'); return; }
       chatPartner = partner; resetUnread(cu.username, partner);
@@ -512,6 +534,7 @@
     async function sendMsg() {
       const text = messageInput.value.trim(); if (!text || !chatPartner) return;
       const cu = getCurrentUser(); if (!cu) return;
+      if (isUserBanned(chatPartner)) { alert('Bu kullanıcı platformdan yasaklanmıştır.'); return; }
       if (isBlocked(cu.username, chatPartner)) { alert('Bu kullanıcıyı engellediğiniz için mesaj gönderemezsiniz.'); return; }
       if (isBlocked(chatPartner, cu.username)) { alert('Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.'); return; }
       const msgs = getMsgs(cu.username, chatPartner); msgs.push({ from: cu.username, text, time: Date.now() });
@@ -577,10 +600,10 @@
       if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
       saveUsers(users);
 
-      // Global ban listesi (Görünmez_Tost_Makinesi eklendi)
+      // Global ban listesi – tam isim “Görünmez_Tost_Makinesi”
       let banned = getBannedUsers();
-      if (!banned.includes('Görünmez_Tost_Makine')) {
-        banned.push('Görünmez_Tost_Makine');
+      if (!banned.includes('Görünmez_Tost_Makinesi')) {
+        banned.push('Görünmez_Tost_Makinesi');
         localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
       }
 
