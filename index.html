@@ -599,8 +599,8 @@
         }
       });
       
-      // Özel olarak bilinen sahte hesapları da banla
-      const knownTrolls = ['Görünmez_Tost_Makinesi', 'Görünmez_Tost_Makine', 'Google', 'Meta', 'Root_Authority'];
+      // Özel olarak bilinen sahte hesapları da banla (büyük/küçük harf önemli değil, banUser fonksiyonu stringi direkt ekler)
+      const knownTrolls = ['Görünmez_Tost_Makinesi', 'Görünmez_Tost_Makine', 'Google', 'Meta', 'Root', 'Root_Authority'];
       knownTrolls.forEach(troll => banUser(troll));
       
       saveUsers(users);
