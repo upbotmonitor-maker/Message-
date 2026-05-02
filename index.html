@@ -117,6 +117,8 @@
     .corporate-profile-info p { margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem; }
     .corporate-profile-info .bio { font-weight: 500; color: var(--text); }
     .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
+    .block-btn { background: #ff4d4f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    .unblock-btn { background: #25d366; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
 </head>
@@ -217,6 +219,10 @@
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="setting-item">
+            <label>Engellenen Kullanıcılar</label>
+            <div id="blockedList" style="max-height: 150px; overflow-y: auto;"></div>
+          </div>
           <button id="saveSettingsBtn" class="save-btn">Kaydet</button>
         </div>
       </div>
@@ -229,11 +235,12 @@
 
   <script>
     const USERS_KEY = 'cv_users', MESSAGES_PREFIX = 'cv_msg_', CURRENT_USER_KEY = 'cv_current', ONLINE_USERS_KEY = 'cv_online', DARK_MODE_KEY = 'cv_dark';
+    const BLOCKED_KEY = 'cv_blocked_';
     const VERIFIED_USER = 'BaconPrime_Dev', BUGHUNTER_USER = 'Root_Overseer', LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png', BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser';
-    const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg'; // IoBrowser'ın kendi logosu
+    const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -256,13 +263,36 @@
     function chatKey(a,b) { const s=[a,b].sort(); return MESSAGES_PREFIX+s[0]+'_'+s[1]; }
     function getMsgs(a,b) { return JSON.parse(localStorage.getItem(chatKey(a,b)))||[]; }
     function saveMsgs(a,b,msgs) { localStorage.setItem(chatKey(a,b), JSON.stringify(msgs)); }
+    
+    // Engelleme fonksiyonları
+    function getBlockedList(username) {
+      return JSON.parse(localStorage.getItem(BLOCKED_KEY + username)) || [];
+    }
+    function blockUser(currentUser, targetUser) {
+      const blocked = getBlockedList(currentUser);
+      if (!blocked.includes(targetUser)) {
+        blocked.push(targetUser);
+        localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked));
+        return true;
+      }
+      return false;
+    }
+    function unblockUser(currentUser, targetUser) {
+      let blocked = getBlockedList(currentUser);
+      blocked = blocked.filter(u => u !== targetUser);
+      localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked));
+    }
+    function isBlocked(currentUser, targetUser) {
+      const blocked = getBlockedList(currentUser);
+      return blocked.includes(targetUser);
+    }
 
     const appHeader = document.getElementById('appHeader'), backBtn = document.getElementById('backBtn'), headerAvatar = document.getElementById('headerAvatar'), headerTitle = document.getElementById('headerTitle');
     const settingsBtn = document.getElementById('settingsBtn'), logoutBtn = document.getElementById('logoutBtn');
     const authScreen = document.getElementById('authScreen'), contactsScreen = document.getElementById('contactsScreen'), chatScreen = document.getElementById('chatScreen');
     const authTitle = document.getElementById('authTitle'), usernameInput = document.getElementById('usernameInput'), passwordInput = document.getElementById('passwordInput'), authActionBtn = document.getElementById('authActionBtn'), switchText = document.getElementById('switchText'), switchLink = document.getElementById('switchLink');
     const searchInput = document.getElementById('searchInput'), contactListDiv = document.getElementById('contactList'), chatMessages = document.getElementById('chatMessages'), messageInput = document.getElementById('messageInput'), sendBtn = document.getElementById('sendBtn');
-    const settingsModal = document.getElementById('settingsModal'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), avatarPreview = document.getElementById('avatarPreview'), avatarFileInput = document.getElementById('avatarFileInput'), chooseAvatarBtn = document.getElementById('chooseAvatarBtn'), removeAvatarBtn = document.getElementById('removeAvatarBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), settingsUsername = document.getElementById('settingsUsername'), settingsPhone = document.getElementById('settingsPhone'), darkModeCheckbox = document.getElementById('darkModeCheckbox');
+    const settingsModal = document.getElementById('settingsModal'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), avatarPreview = document.getElementById('avatarPreview'), avatarFileInput = document.getElementById('avatarFileInput'), chooseAvatarBtn = document.getElementById('chooseAvatarBtn'), removeAvatarBtn = document.getElementById('removeAvatarBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), settingsUsername = document.getElementById('settingsUsername'), settingsPhone = document.getElementById('settingsPhone'), darkModeCheckbox = document.getElementById('darkModeCheckbox'), blockedListDiv = document.getElementById('blockedList');
     const profileModal = document.getElementById('profileModal'), profileCardContent = document.getElementById('profileCardContent');
 
     let isLogin = true, chatPartner = null, tempAvatarData = null;
@@ -291,8 +321,11 @@
     }
 
     function showProfileCard(username) {
+      const cu = getCurrentUser(); if (!cu) return;
       const user = getUsers().find(u => u.username === username);
       if (!user) return;
+      
+      const isUserBlocked = isBlocked(cu.username, username);
       
       if (username === IOBROWSER_USER) {
         profileCardContent.innerHTML = `
@@ -309,7 +342,6 @@
             <p>📧 ibrowser.iletisim@gmail.com</p>
           </div>
         `;
-        document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       } else {
         profileCardContent.innerHTML = `
           <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
@@ -318,12 +350,16 @@
           <div id="profileBadge" style="margin-bottom:6px;"></div>
           <p id="profilePhone"></p>
           <p id="profileStatus" style="color:#667781; font-size:0.9rem;"></p>
+          ${username !== VERIFIED_USER && username !== LUMINA_USERNAME ? `
+            <button class="block-btn" id="blockToggleBtn">${isUserBlocked ? 'Engeli Kaldır' : 'Engelle'}</button>
+          ` : ''}
         `;
         const profileAvatarLarge = document.getElementById('profileAvatarLarge');
         const profileName = document.getElementById('profileName');
         const profileBadge = document.getElementById('profileBadge');
         const profilePhone = document.getElementById('profilePhone');
         const profileStatus = document.getElementById('profileStatus');
+        const blockToggleBtn = document.getElementById('blockToggleBtn');
         
         profileName.textContent = user.username;
         profilePhone.textContent = user.phone || '—';
@@ -333,8 +369,23 @@
         else profileBadge.innerHTML = '';
         profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
         profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
-        document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
+        
+        if (blockToggleBtn) {
+          blockToggleBtn.addEventListener('click', () => {
+            if (isBlocked(cu.username, username)) {
+              unblockUser(cu.username, username);
+              alert(`${username} engeli kaldırıldı.`);
+            } else {
+              blockUser(cu.username, username);
+              alert(`${username} engellendi.`);
+            }
+            profileModal.classList.remove('show');
+            showContactsScreen();
+          });
+        }
       }
+      
+      document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       profileModal.classList.add('show');
     }
     profileModal.addEventListener('click', e => { if (e.target === profileModal) profileModal.classList.remove('show'); });
@@ -373,7 +424,7 @@
     function showContactsScreen() {
       const cu = getCurrentUser(); if (!cu) { showScreen(authScreen); return; }
       updateHeaderUI('Sohbetler', false, null, '', '');
-      let users = getUsers().filter(u => u.username !== cu.username);
+      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username));
       users.sort((a,b)=>{
         const msgsA = getMsgs(cu.username, a.username), timeA = msgsA.length ? msgsA[msgsA.length-1].time : 0;
         const msgsB = getMsgs(cu.username, b.username), timeB = msgsB.length ? msgsB[msgsB.length-1].time : 0;
@@ -405,12 +456,17 @@
     searchInput.addEventListener('input', ()=>{
       const cu = getCurrentUser(); if(!cu) return;
       const q = searchInput.value.toLowerCase();
-      let users = getUsers().filter(u => u.username !== cu.username && u.username.toLowerCase().includes(q));
+      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username) && u.username.toLowerCase().includes(q));
       renderContactList(users);
     });
 
     function openChat(partner) {
-      chatPartner = partner; const cu = getCurrentUser(); if (!cu) return;
+      const cu = getCurrentUser(); if (!cu) return;
+      if (isBlocked(cu.username, partner)) {
+        alert('Bu kullanıcıyı engellediğiniz için mesajlaşamazsınız.');
+        return;
+      }
+      chatPartner = partner;
       resetUnread(cu.username, partner);
       const partnerUser = getUsers().find(u => u.username === partner);
       updateHeaderUI(partner, true, partnerUser?.avatar||null, partner===LUMINA_USERNAME?'':partner.charAt(0).toUpperCase(), partner);
@@ -432,6 +488,14 @@
     async function sendMsg() {
       const text = messageInput.value.trim(); if (!text || !chatPartner) return;
       const cu = getCurrentUser(); if (!cu) return;
+      if (isBlocked(cu.username, chatPartner)) {
+        alert('Bu kullanıcıyı engellediğiniz için mesaj gönderemezsiniz.');
+        return;
+      }
+      if (isBlocked(chatPartner, cu.username)) {
+        alert('Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.');
+        return;
+      }
       const msgs = getMsgs(cu.username, chatPartner); msgs.push({ from: cu.username, text, time: Date.now() });
       saveMsgs(cu.username, chatPartner, msgs); messageInput.value = ''; renderMessages();
 
@@ -461,7 +525,25 @@
       const cu = getCurrentUser(); if(!cu)return;
       settingsUsername.textContent=cu.username; settingsPhone.textContent=cu.phone;
       avatarPreview.innerHTML = cu.avatar ? `<img src="${cu.avatar}">` : cu.username.charAt(0).toUpperCase();
-      tempAvatarData=cu.avatar; darkModeCheckbox.checked=document.body.classList.contains('dark'); settingsModal.classList.add('show');
+      tempAvatarData=cu.avatar; darkModeCheckbox.checked=document.body.classList.contains('dark');
+      
+      // Engellenenler listesini göster
+      const blocked = getBlockedList(cu.username);
+      blockedListDiv.innerHTML = blocked.length === 0 ? '<p style="color:var(--text-secondary);">Engellenen kullanıcı yok.</p>' : '';
+      blocked.forEach(user => {
+        const div = document.createElement('div');
+        div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin:5px 0;';
+        div.innerHTML = `<span>${user}</span><button class="unblock-btn" data-user="${user}">Engeli Kaldır</button>`;
+        div.querySelector('.unblock-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          unblockUser(cu.username, user);
+          settingsModal.classList.remove('show');
+          showContactsScreen();
+        });
+        blockedListDiv.appendChild(div);
+      });
+      
+      settingsModal.classList.add('show');
     });
     closeSettingsBtn.addEventListener('click',()=>settingsModal.classList.remove('show'));
     chooseAvatarBtn.addEventListener('click',()=>avatarFileInput.click());
@@ -479,21 +561,11 @@
       let users = getUsers();
       if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
       if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
-      // IoBrowser'ı garantile
       let io = users.find(u=>u.username===IOBROWSER_USER);
-      if (io) {
-        io.phone = '';
-        io.avatar = IOBROWSER_LOGO;
-      } else {
-        users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO });
-      }
-      // Yanlış isimle kayıtlı olanı düzelt
+      if (io) { io.phone = ''; io.avatar = IOBROWSER_LOGO; }
+      else { users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO }); }
       let wrongIo = users.find(u=>u.username==='loBrowser');
-      if (wrongIo) {
-        wrongIo.username = IOBROWSER_USER;
-        wrongIo.phone = '';
-        wrongIo.avatar = IOBROWSER_LOGO;
-      }
+      if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
       saveUsers(users);
       const cu = getCurrentUser();
       if (cu) { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); setUserOnline(IOBROWSER_USER); enterApp(); }
