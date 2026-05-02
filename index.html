@@ -119,6 +119,18 @@
     .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
     .block-btn { background: #ff4d4f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .unblock-btn { background: #25d366; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+
+    /* ===== BAN EKRANI STİLLERİ ===== */
+    .banned-screen { background: var(--bg); justify-content: center; align-items: center; padding: 30px 20px; text-align: center; }
+    .banned-icon-container { position: relative; width: 100px; height: 100px; margin: 0 auto 24px; }
+    .banned-icon { width: 100%; height: 100%; border-radius: 50%; background: #ff4d4f; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; }
+    body.dark .banned-icon { background: #e53935; }
+    .banned-title { font-size: 1.3rem; font-weight: 600; color: var(--text); margin-bottom: 12px; line-height: 1.4; }
+    .banned-message { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .banned-appeal-btn { background: var(--header-bg); color: white; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-bottom: 16px; width: 80%; max-width: 300px; }
+    .banned-appeal-btn:hover { opacity: 0.9; }
+    .banned-logout-btn { background: none; border: 1px solid var(--border); color: var(--text-secondary); padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer; width: 80%; max-width: 300px; }
+
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
 </head>
@@ -192,6 +204,20 @@
       </div>
     </div>
 
+    <!-- YENİ: BAN EKRANI -->
+    <div id="bannedScreen" class="screen banned-screen">
+      <div class="banned-icon-container">
+        <div class="banned-icon">🚫</div>
+      </div>
+      <h2 class="banned-title">Bu hesap artık Chatverse uygulamasını kullanamaz</h2>
+      <p class="banned-message">
+        Hesap etkinliğinizin Hizmet Şartlarımızı ihlal ettiğini tespit ettik.
+        Hesabınız süresiz olarak askıya alınmıştır.
+      </p>
+      <button class="banned-appeal-btn" id="bannedAppealBtn">Gözden geçirme iste</button>
+      <button class="banned-logout-btn" id="bannedLogoutBtn">Çıkış Yap</button>
+    </div>
+
     <div id="settingsModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
@@ -236,6 +262,7 @@
   <script>
     const USERS_KEY = 'cv_users', MESSAGES_PREFIX = 'cv_msg_', CURRENT_USER_KEY = 'cv_current', ONLINE_USERS_KEY = 'cv_online', DARK_MODE_KEY = 'cv_dark';
     const BLOCKED_KEY = 'cv_blocked_';
+    const BANNED_USERS_KEY = 'cv_banned_users';
     const VERIFIED_USER = 'BaconPrime_Dev', BUGHUNTER_USER = 'Root_Overseer', LUMINA_USERNAME = 'Lumina';
     const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png', BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
@@ -264,17 +291,10 @@
     function getMsgs(a,b) { return JSON.parse(localStorage.getItem(chatKey(a,b)))||[]; }
     function saveMsgs(a,b,msgs) { localStorage.setItem(chatKey(a,b), JSON.stringify(msgs)); }
     
-    // Engelleme fonksiyonları
-    function getBlockedList(username) {
-      return JSON.parse(localStorage.getItem(BLOCKED_KEY + username)) || [];
-    }
+    function getBlockedList(username) { return JSON.parse(localStorage.getItem(BLOCKED_KEY + username)) || []; }
     function blockUser(currentUser, targetUser) {
       const blocked = getBlockedList(currentUser);
-      if (!blocked.includes(targetUser)) {
-        blocked.push(targetUser);
-        localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked));
-        return true;
-      }
+      if (!blocked.includes(targetUser)) { blocked.push(targetUser); localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked)); return true; }
       return false;
     }
     function unblockUser(currentUser, targetUser) {
@@ -282,18 +302,21 @@
       blocked = blocked.filter(u => u !== targetUser);
       localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked));
     }
-    function isBlocked(currentUser, targetUser) {
-      const blocked = getBlockedList(currentUser);
-      return blocked.includes(targetUser);
-    }
+    function isBlocked(currentUser, targetUser) { return getBlockedList(currentUser).includes(targetUser); }
+
+    // Global Ban fonksiyonları
+    function getBannedUsers() { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY)) || []; }
+    function isUserBanned(username) { return getBannedUsers().includes(username); }
 
     const appHeader = document.getElementById('appHeader'), backBtn = document.getElementById('backBtn'), headerAvatar = document.getElementById('headerAvatar'), headerTitle = document.getElementById('headerTitle');
     const settingsBtn = document.getElementById('settingsBtn'), logoutBtn = document.getElementById('logoutBtn');
     const authScreen = document.getElementById('authScreen'), contactsScreen = document.getElementById('contactsScreen'), chatScreen = document.getElementById('chatScreen');
+    const bannedScreen = document.getElementById('bannedScreen');
     const authTitle = document.getElementById('authTitle'), usernameInput = document.getElementById('usernameInput'), passwordInput = document.getElementById('passwordInput'), authActionBtn = document.getElementById('authActionBtn'), switchText = document.getElementById('switchText'), switchLink = document.getElementById('switchLink');
     const searchInput = document.getElementById('searchInput'), contactListDiv = document.getElementById('contactList'), chatMessages = document.getElementById('chatMessages'), messageInput = document.getElementById('messageInput'), sendBtn = document.getElementById('sendBtn');
     const settingsModal = document.getElementById('settingsModal'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), avatarPreview = document.getElementById('avatarPreview'), avatarFileInput = document.getElementById('avatarFileInput'), chooseAvatarBtn = document.getElementById('chooseAvatarBtn'), removeAvatarBtn = document.getElementById('removeAvatarBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), settingsUsername = document.getElementById('settingsUsername'), settingsPhone = document.getElementById('settingsPhone'), darkModeCheckbox = document.getElementById('darkModeCheckbox'), blockedListDiv = document.getElementById('blockedList');
     const profileModal = document.getElementById('profileModal'), profileCardContent = document.getElementById('profileCardContent');
+    const bannedAppealBtn = document.getElementById('bannedAppealBtn'), bannedLogoutBtn = document.getElementById('bannedLogoutBtn');
 
     let isLogin = true, chatPartner = null, tempAvatarData = null;
 
@@ -304,7 +327,11 @@
     (function(){ const saved = localStorage.getItem(DARK_MODE_KEY)==='true'; applyDarkMode(saved); if(darkModeCheckbox) darkModeCheckbox.checked = saved; })();
     darkModeCheckbox.addEventListener('change', ()=> applyDarkMode(darkModeCheckbox.checked));
 
-    function showScreen(s) { authScreen.classList.remove('active'); contactsScreen.classList.remove('active'); chatScreen.classList.remove('active'); s.classList.add('active'); }
+    function showScreen(s) {
+      authScreen.classList.remove('active'); contactsScreen.classList.remove('active');
+      chatScreen.classList.remove('active'); bannedScreen.classList.remove('active');
+      s.classList.add('active');
+    }
 
     function updateHeaderUI(titleText, showBack=false, avatarSrc=null, initial='', partnerUsername='') {
       if (partnerUsername === VERIFIED_USER) headerTitle.innerHTML = `${partnerUsername} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>`;
@@ -324,9 +351,7 @@
       const cu = getCurrentUser(); if (!cu) return;
       const user = getUsers().find(u => u.username === username);
       if (!user) return;
-      
       const isUserBlocked = isBlocked(cu.username, username);
-      
       if (username === IOBROWSER_USER) {
         profileCardContent.innerHTML = `
           <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
@@ -350,9 +375,7 @@
           <div id="profileBadge" style="margin-bottom:6px;"></div>
           <p id="profilePhone"></p>
           <p id="profileStatus" style="color:#667781; font-size:0.9rem;"></p>
-          ${username !== VERIFIED_USER && username !== LUMINA_USERNAME ? `
-            <button class="block-btn" id="blockToggleBtn">${isUserBlocked ? 'Engeli Kaldır' : 'Engelle'}</button>
-          ` : ''}
+          ${username !== VERIFIED_USER && username !== LUMINA_USERNAME ? `<button class="block-btn" id="blockToggleBtn">${isUserBlocked ? 'Engeli Kaldır' : 'Engelle'}</button>` : ''}
         `;
         const profileAvatarLarge = document.getElementById('profileAvatarLarge');
         const profileName = document.getElementById('profileName');
@@ -360,31 +383,21 @@
         const profilePhone = document.getElementById('profilePhone');
         const profileStatus = document.getElementById('profileStatus');
         const blockToggleBtn = document.getElementById('blockToggleBtn');
-        
-        profileName.textContent = user.username;
-        profilePhone.textContent = user.phone || '—';
+        profileName.textContent = user.username; profilePhone.textContent = user.phone || '—';
         if (user.username === VERIFIED_USER) profileBadge.innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>';
         else if (user.username === LUMINA_USERNAME) profileBadge.innerHTML = '<span class="ai-badge">AI</span>';
         else if (user.username === BUGHUNTER_USER) profileBadge.innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
         else profileBadge.innerHTML = '';
         profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
         profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
-        
         if (blockToggleBtn) {
           blockToggleBtn.addEventListener('click', () => {
-            if (isBlocked(cu.username, username)) {
-              unblockUser(cu.username, username);
-              alert(`${username} engeli kaldırıldı.`);
-            } else {
-              blockUser(cu.username, username);
-              alert(`${username} engellendi.`);
-            }
-            profileModal.classList.remove('show');
-            showContactsScreen();
+            if (isBlocked(cu.username, username)) { unblockUser(cu.username, username); alert(`${username} engeli kaldırıldı.`); }
+            else { blockUser(cu.username, username); alert(`${username} engellendi.`); }
+            profileModal.classList.remove('show'); showContactsScreen();
           });
         }
       }
-      
       document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       profileModal.classList.add('show');
     }
@@ -402,7 +415,14 @@
       let users = getUsers();
       if (isLogin) {
         const user = users.find(u => u.username === username && u.password === password);
-        if (!user) return alert('Hatalı giriş.'); saveCurrentUser(user); setUserOnline(user.username); enterApp();
+        if (!user) return alert('Hatalı giriş.');
+        saveCurrentUser(user);
+        if (isUserBanned(username)) {
+          showScreen(bannedScreen);
+          appHeader.classList.remove('visible');
+        } else {
+          setUserOnline(user.username); enterApp();
+        }
       } else {
         if (users.some(u => u.username === username)) return alert('Kullanıcı adı alınmış.');
         const newUser = { username, password, phone: randomPhone(), avatar: null };
@@ -410,6 +430,13 @@
         alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`); enterApp();
       }
       usernameInput.value = ''; passwordInput.value = '';
+    });
+
+    bannedAppealBtn.addEventListener('click', () => {
+      alert('İtirazınız alındı. En kısa sürede incelenecektir.\n\nE-posta: destek@chatverse.com');
+    });
+    bannedLogoutBtn.addEventListener('click', () => {
+      clearCurrentUser(); showScreen(authScreen); appHeader.classList.remove('visible');
     });
 
     logoutBtn.addEventListener('click', ()=>{
@@ -424,7 +451,7 @@
     function showContactsScreen() {
       const cu = getCurrentUser(); if (!cu) { showScreen(authScreen); return; }
       updateHeaderUI('Sohbetler', false, null, '', '');
-      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username));
+      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username) && !isUserBanned(u.username));
       users.sort((a,b)=>{
         const msgsA = getMsgs(cu.username, a.username), timeA = msgsA.length ? msgsA[msgsA.length-1].time : 0;
         const msgsB = getMsgs(cu.username, b.username), timeB = msgsB.length ? msgsB[msgsB.length-1].time : 0;
@@ -456,18 +483,15 @@
     searchInput.addEventListener('input', ()=>{
       const cu = getCurrentUser(); if(!cu) return;
       const q = searchInput.value.toLowerCase();
-      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username) && u.username.toLowerCase().includes(q));
+      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username) && !isUserBanned(u.username) && u.username.toLowerCase().includes(q));
       renderContactList(users);
     });
 
     function openChat(partner) {
       const cu = getCurrentUser(); if (!cu) return;
-      if (isBlocked(cu.username, partner)) {
-        alert('Bu kullanıcıyı engellediğiniz için mesajlaşamazsınız.');
-        return;
-      }
-      chatPartner = partner;
-      resetUnread(cu.username, partner);
+      if (isBlocked(cu.username, partner)) { alert('Bu kullanıcıyı engellediğiniz için mesajlaşamazsınız.'); return; }
+      if (isBlocked(partner, cu.username)) { alert('Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.'); return; }
+      chatPartner = partner; resetUnread(cu.username, partner);
       const partnerUser = getUsers().find(u => u.username === partner);
       updateHeaderUI(partner, true, partnerUser?.avatar||null, partner===LUMINA_USERNAME?'':partner.charAt(0).toUpperCase(), partner);
       showScreen(chatScreen); renderMessages();
@@ -488,17 +512,10 @@
     async function sendMsg() {
       const text = messageInput.value.trim(); if (!text || !chatPartner) return;
       const cu = getCurrentUser(); if (!cu) return;
-      if (isBlocked(cu.username, chatPartner)) {
-        alert('Bu kullanıcıyı engellediğiniz için mesaj gönderemezsiniz.');
-        return;
-      }
-      if (isBlocked(chatPartner, cu.username)) {
-        alert('Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.');
-        return;
-      }
+      if (isBlocked(cu.username, chatPartner)) { alert('Bu kullanıcıyı engellediğiniz için mesaj gönderemezsiniz.'); return; }
+      if (isBlocked(chatPartner, cu.username)) { alert('Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.'); return; }
       const msgs = getMsgs(cu.username, chatPartner); msgs.push({ from: cu.username, text, time: Date.now() });
       saveMsgs(cu.username, chatPartner, msgs); messageInput.value = ''; renderMessages();
-
       if (chatPartner === LUMINA_USERNAME) {
         try {
           const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
@@ -526,23 +543,15 @@
       settingsUsername.textContent=cu.username; settingsPhone.textContent=cu.phone;
       avatarPreview.innerHTML = cu.avatar ? `<img src="${cu.avatar}">` : cu.username.charAt(0).toUpperCase();
       tempAvatarData=cu.avatar; darkModeCheckbox.checked=document.body.classList.contains('dark');
-      
-      // Engellenenler listesini göster
       const blocked = getBlockedList(cu.username);
       blockedListDiv.innerHTML = blocked.length === 0 ? '<p style="color:var(--text-secondary);">Engellenen kullanıcı yok.</p>' : '';
       blocked.forEach(user => {
         const div = document.createElement('div');
         div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin:5px 0;';
         div.innerHTML = `<span>${user}</span><button class="unblock-btn" data-user="${user}">Engeli Kaldır</button>`;
-        div.querySelector('.unblock-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          unblockUser(cu.username, user);
-          settingsModal.classList.remove('show');
-          showContactsScreen();
-        });
+        div.querySelector('.unblock-btn').addEventListener('click', (e) => { e.stopPropagation(); unblockUser(cu.username, user); settingsModal.classList.remove('show'); showContactsScreen(); });
         blockedListDiv.appendChild(div);
       });
-      
       settingsModal.classList.add('show');
     });
     closeSettingsBtn.addEventListener('click',()=>settingsModal.classList.remove('show'));
@@ -567,9 +576,19 @@
       let wrongIo = users.find(u=>u.username==='loBrowser');
       if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
       saveUsers(users);
+
+      // Global ban listesi (Görünmez_Tost_Makinesi eklendi)
+      let banned = getBannedUsers();
+      if (!banned.includes('Görünmez_Tost_Makine')) {
+        banned.push('Görünmez_Tost_Makine');
+        localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
+      }
+
       const cu = getCurrentUser();
-      if (cu) { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); setUserOnline(IOBROWSER_USER); enterApp(); }
-      else { showScreen(authScreen); appHeader.classList.remove('visible'); }
+      if (cu) {
+        if (isUserBanned(cu.username)) { showScreen(bannedScreen); appHeader.classList.remove('visible'); }
+        else { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); setUserOnline(IOBROWSER_USER); enterApp(); }
+      } else { showScreen(authScreen); appHeader.classList.remove('visible'); }
     })();
   </script>
 </body>
