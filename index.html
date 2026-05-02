@@ -271,11 +271,11 @@
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
-    // Anahtar kelime filtresi TAMAMEN KALDIRILDI
+    // Anahtar kelime filtresi KAPALI
     const BANNED_KEYWORDS = [];
 
     // AI moderasyondan MUAF özel hesaplar (asla banlanmaz)
-    const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER];
+    const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
@@ -321,6 +321,11 @@
         localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
       }
     }
+    function unbanUser(username) {
+      let banned = getBannedUsers();
+      banned = banned.filter(u => u !== username);
+      localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
+    }
     function isUserBanned(username) { return getBannedUsers().includes(username); }
 
     function isUsernameForbidden(username) {
@@ -330,9 +335,13 @@
     }
 
     const LUMINA_MODERATION_ENABLED = true;
+    let lastModerationTime = 0;
     async function aiModerateContent(content, username) {
       if (!LUMINA_MODERATION_ENABLED) return false;
       if (MODERATION_IMMUNE.includes(username)) return false;
+      const now = Date.now();
+      if (now - lastModerationTime < 3000) return false; // 3 saniyede bir kontrol
+      lastModerationTime = now;
       const prompt = `Aşağıdaki mesajı incele. Eğer tehdit, taciz, spam, dolandırıcılık, yetkisiz resmiyet taklidi veya platform kurallarını ihlal eden bir içerikse "EVET" yaz, değilse "HAYIR". Sadece EVET veya HAYIR yanıtı ver.\n\nMesaj: "${content}"`;
       try {
         const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
@@ -548,8 +557,8 @@
       if (isUserBanned(chatPartner)) { alert('Bu kullanıcı yasaklanmış.'); return; }
       if (isBlocked(cu.username, chatPartner)) { alert('Engellenmiş kullanıcı.'); return; }
 
-      // AI moderasyon - muaf hesaplar korunur
-      if (LUMINA_MODERATION_ENABLED && !MODERATION_IMMUNE.includes(cu.username)) {
+      // AI moderasyon - sadece Lumina dışı sohbetlerde ve 3 saniyede bir
+      if (LUMINA_MODERATION_ENABLED && chatPartner !== LUMINA_USERNAME && !MODERATION_IMMUNE.includes(cu.username)) {
         const harmful = await aiModerateContent(text, cu.username);
         if (harmful) {
           banUser(cu.username);
@@ -615,13 +624,32 @@
 
     (function init() {
       let users = getUsers();
-      if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
-      if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
-      let io = users.find(u=>u.username===IOBROWSER_USER);
+
+      // BaconPrime_Dev garantisi
+      const bacon = users.find(u => u.username === VERIFIED_USER);
+      if (!bacon) {
+        users.push({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null });
+      } else if (!bacon.phone || bacon.phone.startsWith('+90')) {
+        bacon.phone = '+1 555 000 0001';
+      }
+
+      // Lumina garantisi
+      if (!users.find(u => u.username === LUMINA_USERNAME)) {
+        users.push({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL });
+      } else {
+        const lumina = users.find(u => u.username === LUMINA_USERNAME);
+        if (lumina) { lumina.phone = ''; lumina.avatar = LUMINA_AVATAR_URL; }
+      }
+
+      // IoBrowser garantisi
+      let io = users.find(u => u.username === IOBROWSER_USER);
       if (io) { io.phone = ''; io.avatar = IOBROWSER_LOGO; }
-      else { users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO }); }
-      let wrongIo = users.find(u=>u.username==='loBrowser');
+      else { users.push({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO }); }
+      let wrongIo = users.find(u => u.username === 'loBrowser');
       if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
+
+      // Nenega'yı ban listesinden çıkar
+      unbanUser('Nenega');
 
       saveUsers(users);
 
