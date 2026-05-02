@@ -119,45 +119,27 @@
     .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
     .block-btn { background: #ff4d4f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .unblock-btn { background: #25d366; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-
-    /* Ban ekranı – WhatsApp tarzı sade ekran */
     .banned-fullscreen {
-      background: #f0f2f5;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 40px 30px;
-      gap: 16px;
+      background: #f0f2f5; flex-direction: column; justify-content: center;
+      align-items: center; text-align: center; padding: 40px 30px; gap: 16px;
     }
     body.dark .banned-fullscreen { background: #0b141a; }
     .banned-icon {
-      width: 90px; height: 90px; border-radius: 50%;
-      background: #ff4d4f; color: white; font-size: 3rem;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 8px;
+      width: 90px; height: 90px; border-radius: 50%; background: #ff4d4f;
+      color: white; font-size: 3rem; display: flex; align-items: center;
+      justify-content: center; margin-bottom: 8px;
     }
-    .banned-title {
-      font-size: 1.3rem; font-weight: 600; color: #111;
-      line-height: 1.4;
-    }
+    .banned-title { font-size: 1.3rem; font-weight: 600; color: #111; line-height: 1.4; }
     body.dark .banned-title { color: #e9edef; }
-    .banned-desc {
-      font-size: 0.9rem; color: #667781; line-height: 1.5;
-      max-width: 300px;
-    }
+    .banned-desc { font-size: 0.9rem; color: #667781; line-height: 1.5; max-width: 300px; }
     .banned-appeal {
-      background: #075e54; color: white; border: none;
-      padding: 12px 24px; border-radius: 25px;
-      font-weight: bold; font-size: 0.9rem; cursor: pointer;
-      margin-top: 8px;
+      background: #075e54; color: white; border: none; padding: 12px 24px;
+      border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 8px;
     }
     .banned-logout {
       background: none; border: 1px solid #667781; color: #667781;
-      padding: 10px 24px; border-radius: 25px; font-weight: bold;
-      font-size: 0.85rem; cursor: pointer;
+      padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer;
     }
-
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
 </head>
@@ -231,14 +213,10 @@
       </div>
     </div>
 
-    <!-- BAN EKRANI (WhatsApp benzeri, sade) -->
     <div id="bannedScreen" class="screen banned-fullscreen">
       <div class="banned-icon">🚫</div>
       <h2 class="banned-title">Bu hesap Chatverse'i kullanamaz</h2>
-      <p class="banned-desc">
-        Hesap etkinliğinizin Hizmet Şartlarımızı ihlal ettiğini tespit ettik.
-        Hesabınız askıya alınmıştır.
-      </p>
+      <p class="banned-desc">Hesap etkinliğinizin Hizmet Şartlarımızı ihlal ettiğini tespit ettik. Hesabınız askıya alınmıştır.</p>
       <button class="banned-appeal" id="bannedAppealBtn">Gözden geçirme iste</button>
       <button class="banned-logout" id="bannedLogoutBtn">Çıkış Yap</button>
     </div>
@@ -292,6 +270,9 @@
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
+    // Yasaklı anahtar kelimeler (büyük/küçük harf duyarsız)
+    const BANNED_KEYWORDS = ['google', 'meta', 'tost', 'facebook', 'apple', 'microsoft', 'amazon'];
+
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
     function getCurrentUser() { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }
@@ -329,6 +310,11 @@
 
     function getBannedUsers() { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY)) || []; }
     function isUserBanned(username) { return getBannedUsers().includes(username); }
+
+    function isUsernameForbidden(username) {
+      const lower = username.toLowerCase();
+      return BANNED_KEYWORDS.some(keyword => lower.includes(keyword));
+    }
 
     const appHeader = document.getElementById('appHeader'), backBtn = document.getElementById('backBtn'), headerAvatar = document.getElementById('headerAvatar'), headerTitle = document.getElementById('headerTitle');
     const settingsBtn = document.getElementById('settingsBtn'), logoutBtn = document.getElementById('logoutBtn');
@@ -434,16 +420,16 @@
     authActionBtn.addEventListener('click', () => {
       const username = usernameInput.value.trim(), password = passwordInput.value.trim();
       if (!username || !password) return alert('Kullanıcı adı ve şifre gerekli.');
+      if (!isLogin && isUsernameForbidden(username)) {
+        return alert('Bu kullanıcı adı yasaklanmıştır. Lütfen farklı bir kullanıcı adı seçin.');
+      }
       let users = getUsers();
       if (isLogin) {
         const user = users.find(u => u.username === username && u.password === password);
         if (!user) return alert('Hatalı giriş.');
         saveCurrentUser(user);
-        if (isUserBanned(username)) {
-          showScreen(bannedScreen); appHeader.classList.remove('visible');
-        } else {
-          setUserOnline(user.username); enterApp();
-        }
+        if (isUserBanned(username)) { showScreen(bannedScreen); appHeader.classList.remove('visible'); }
+        else { setUserOnline(user.username); enterApp(); }
       } else {
         if (users.some(u => u.username === username)) return alert('Kullanıcı adı alınmış.');
         const newUser = { username, password, phone: randomPhone(), avatar: null };
@@ -598,9 +584,17 @@
       else { users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO }); }
       let wrongIo = users.find(u=>u.username==='loBrowser');
       if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
+
+      // Mevcut yasaklı kelimeleri içeren kullanıcıları da banla
+      users.forEach(u => {
+        if (isUsernameForbidden(u.username) && !getBannedUsers().includes(u.username)) {
+          let banned = getBannedUsers();
+          banned.push(u.username);
+          localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
+        }
+      });
       saveUsers(users);
 
-      // Global ban listesi – tam isim “Görünmez_Tost_Makinesi”
       let banned = getBannedUsers();
       if (!banned.includes('Görünmez_Tost_Makinesi')) {
         banned.push('Görünmez_Tost_Makinesi');
