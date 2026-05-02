@@ -271,21 +271,22 @@
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
-    // Anahtar kelime filtresi KAPALI
-    const BANNED_KEYWORDS = [];
-
     // AI moderasyondan MUAF özel hesaplar (asla banlanmaz)
     const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
+
+    // Özel tespit listesi - doğrudan banlanacak kelimeler (AI devreye girmeden)
+    const INSTANT_BAN_PATTERNS = [
+      'tos violation', 'terms of service', 'flagged for', 'unauthorized data',
+      'security clearance', 'outgoing packets', 'proxied for inspection',
+      'compliance check', 'organization id', 'cloudflare', 'aws',
+      'moderator session', 'monitored'
+    ];
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
     function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
     function getCurrentUser() { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }
     function saveCurrentUser(u) { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(u)); }
     function clearCurrentUser() { localStorage.removeItem(CURRENT_USER_KEY); }
-    function updateCurrentUser(updated) {
-      const users = getUsers(); const idx = users.findIndex(u => u.username === updated.username);
-      if (idx !== -1) { users[idx] = updated; saveUsers(users); saveCurrentUser(updated); }
-    }
     function getOnlineUsers() { return JSON.parse(localStorage.getItem(ONLINE_USERS_KEY)) || {}; }
     function setUserOnline(username) { const o = getOnlineUsers(); o[username] = Date.now(); localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(o)); }
     function setUserOffline(username) { const o = getOnlineUsers(); delete o[username]; localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(o)); }
@@ -328,33 +329,9 @@
     }
     function isUserBanned(username) { return getBannedUsers().includes(username); }
 
-    function isUsernameForbidden(username) {
-      if (BANNED_KEYWORDS.length === 0) return false;
-      const lower = username.toLowerCase();
-      return BANNED_KEYWORDS.some(keyword => lower.includes(keyword));
-    }
-
-    const LUMINA_MODERATION_ENABLED = true;
-    let lastModerationTime = 0;
-    async function aiModerateContent(content, username) {
-      if (!LUMINA_MODERATION_ENABLED) return false;
-      if (MODERATION_IMMUNE.includes(username)) return false;
-      const now = Date.now();
-      if (now - lastModerationTime < 3000) return false; // 3 saniyede bir kontrol
-      lastModerationTime = now;
-      const prompt = `Aşağıdaki mesajı incele. Eğer tehdit, taciz, spam, dolandırıcılık, yetkisiz resmiyet taklidi veya platform kurallarını ihlal eden bir içerikse "EVET" yaz, değilse "HAYIR". Sadece EVET veya HAYIR yanıtı ver.\n\nMesaj: "${content}"`;
-      try {
-        const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-api-key-mira-001' },
-          body: JSON.stringify({ message: prompt, user: 'moderator' })
-        });
-        const data = await res.json();
-        const answer = (data.reply || data.message || '').trim().toUpperCase();
-        return answer.includes('EVET');
-      } catch (e) {
-        return false;
-      }
+    function isInstantBan(content) {
+      const lower = content.toLowerCase();
+      return INSTANT_BAN_PATTERNS.some(pattern => lower.includes(pattern));
     }
 
     const appHeader = document.getElementById('appHeader'), backBtn = document.getElementById('backBtn'), headerAvatar = document.getElementById('headerAvatar'), headerTitle = document.getElementById('headerTitle');
@@ -426,19 +403,15 @@
           <p id="profileStatus" style="color:#667781; font-size:0.9rem;"></p>
           ${username !== VERIFIED_USER && username !== LUMINA_USERNAME ? `<button class="block-btn" id="blockToggleBtn">${isUserBlocked ? 'Engeli Kaldır' : 'Engelle'}</button>` : ''}
         `;
-        const profileAvatarLarge = document.getElementById('profileAvatarLarge');
-        const profileName = document.getElementById('profileName');
-        const profileBadge = document.getElementById('profileBadge');
-        const profilePhone = document.getElementById('profilePhone');
-        const profileStatus = document.getElementById('profileStatus');
+        document.getElementById('profileName').textContent = user.username;
+        document.getElementById('profilePhone').textContent = user.phone || '—';
+        if (user.username === VERIFIED_USER) document.getElementById('profileBadge').innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png">';
+        else if (user.username === LUMINA_USERNAME) document.getElementById('profileBadge').innerHTML = '<span class="ai-badge">AI</span>';
+        else if (user.username === BUGHUNTER_USER) document.getElementById('profileBadge').innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}">`;
+        else document.getElementById('profileBadge').innerHTML = '';
+        document.getElementById('profileStatus').textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
+        document.getElementById('profileAvatarLarge').innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
         const blockToggleBtn = document.getElementById('blockToggleBtn');
-        profileName.textContent = user.username; profilePhone.textContent = user.phone || '—';
-        if (user.username === VERIFIED_USER) profileBadge.innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>';
-        else if (user.username === LUMINA_USERNAME) profileBadge.innerHTML = '<span class="ai-badge">AI</span>';
-        else if (user.username === BUGHUNTER_USER) profileBadge.innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
-        else profileBadge.innerHTML = '';
-        profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
-        profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
         if (blockToggleBtn) {
           blockToggleBtn.addEventListener('click', () => {
             if (isBlocked(cu.username, username)) { unblockUser(cu.username, username); alert(`${username} engeli kaldırıldı.`); }
@@ -458,10 +431,9 @@
       else { authTitle.textContent='Kayıt Ol'; authActionBtn.textContent='Kayıt Ol'; switchText.textContent='Zaten hesabın var mı?'; switchLink.textContent='Giriş yap'; }
     });
 
-    authActionBtn.addEventListener('click', async () => {
+    authActionBtn.addEventListener('click', () => {
       const username = usernameInput.value.trim(), password = passwordInput.value.trim();
       if (!username || !password) return alert('Kullanıcı adı ve şifre gerekli.');
-      if (!isLogin && isUsernameForbidden(username)) return alert('Bu kullanıcı adı yasaklanmıştır.');
       let users = getUsers();
       if (isLogin) {
         const user = users.find(u => u.username === username && u.password === password);
@@ -557,16 +529,13 @@
       if (isUserBanned(chatPartner)) { alert('Bu kullanıcı yasaklanmış.'); return; }
       if (isBlocked(cu.username, chatPartner)) { alert('Engellenmiş kullanıcı.'); return; }
 
-      // AI moderasyon - sadece Lumina dışı sohbetlerde ve 3 saniyede bir
-      if (LUMINA_MODERATION_ENABLED && chatPartner !== LUMINA_USERNAME && !MODERATION_IMMUNE.includes(cu.username)) {
-        const harmful = await aiModerateContent(text, cu.username);
-        if (harmful) {
-          banUser(cu.username);
-          saveCurrentUser({...getCurrentUser(), banned: true});
-          showScreen(bannedScreen);
-          appHeader.classList.remove('visible');
-          return;
-        }
+      // Anında ban kontrolü (sahte resmiyet taklidi)
+      if (!MODERATION_IMMUNE.includes(cu.username) && isInstantBan(text)) {
+        banUser(cu.username);
+        saveCurrentUser({...getCurrentUser(), banned: true});
+        showScreen(bannedScreen);
+        appHeader.classList.remove('visible');
+        return;
       }
 
       const msgs = getMsgs(cu.username, chatPartner); msgs.push({ from: cu.username, text, time: Date.now() });
@@ -624,35 +593,13 @@
 
     (function init() {
       let users = getUsers();
-
-      // BaconPrime_Dev garantisi
-      const bacon = users.find(u => u.username === VERIFIED_USER);
-      if (!bacon) {
-        users.push({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null });
-      } else if (!bacon.phone || bacon.phone.startsWith('+90')) {
-        bacon.phone = '+1 555 000 0001';
-      }
-
-      // Lumina garantisi
-      if (!users.find(u => u.username === LUMINA_USERNAME)) {
-        users.push({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL });
-      } else {
-        const lumina = users.find(u => u.username === LUMINA_USERNAME);
-        if (lumina) { lumina.phone = ''; lumina.avatar = LUMINA_AVATAR_URL; }
-      }
-
-      // IoBrowser garantisi
-      let io = users.find(u => u.username === IOBROWSER_USER);
+      if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
+      if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
+      let io = users.find(u=>u.username===IOBROWSER_USER);
       if (io) { io.phone = ''; io.avatar = IOBROWSER_LOGO; }
-      else { users.push({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO }); }
-      let wrongIo = users.find(u => u.username === 'loBrowser');
-      if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
-
-      // Nenega'yı ban listesinden çıkar
+      else { users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO }); }
       unbanUser('Nenega');
-
       saveUsers(users);
-
       const cu = getCurrentUser();
       if (cu) {
         if (isUserBanned(cu.username)) { showScreen(bannedScreen); appHeader.classList.remove('visible'); }
