@@ -110,7 +110,6 @@
     .gold-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; pointer-events: none; user-select: none; flex-shrink: 0; }
     .gold-badge img { width: 23px; height: 23px; object-fit: contain; }
     .lumina-status { color: #25d366 !important; font-weight: 500; font-style: italic; }
-    /* Kurumsal profil kartı stilleri */
     .corporate-profile-header { background: linear-gradient(135deg, #1a1a3e, #4a1a6b); padding: 20px; text-align: center; border-radius: 16px 16px 0 0; }
     .corporate-profile-logo { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; background: white; display: flex; align-items: center; justify-content: center; }
     .corporate-profile-logo img { width: 70%; height: 70%; object-fit: contain; }
@@ -264,7 +263,7 @@
     const authTitle = document.getElementById('authTitle'), usernameInput = document.getElementById('usernameInput'), passwordInput = document.getElementById('passwordInput'), authActionBtn = document.getElementById('authActionBtn'), switchText = document.getElementById('switchText'), switchLink = document.getElementById('switchLink');
     const searchInput = document.getElementById('searchInput'), contactListDiv = document.getElementById('contactList'), chatMessages = document.getElementById('chatMessages'), messageInput = document.getElementById('messageInput'), sendBtn = document.getElementById('sendBtn');
     const settingsModal = document.getElementById('settingsModal'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), avatarPreview = document.getElementById('avatarPreview'), avatarFileInput = document.getElementById('avatarFileInput'), chooseAvatarBtn = document.getElementById('chooseAvatarBtn'), removeAvatarBtn = document.getElementById('removeAvatarBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), settingsUsername = document.getElementById('settingsUsername'), settingsPhone = document.getElementById('settingsPhone'), darkModeCheckbox = document.getElementById('darkModeCheckbox');
-    const profileModal = document.getElementById('profileModal'), closeProfileBtn = document.getElementById('closeProfileBtn'), profileCardContent = document.getElementById('profileCardContent');
+    const profileModal = document.getElementById('profileModal'), profileCardContent = document.getElementById('profileCardContent');
 
     let isLogin = true, chatPartner = null, tempAvatarData = null;
 
@@ -296,7 +295,6 @@
       if (!user) return;
       
       if (username === IOBROWSER_USER) {
-        // Özel IoBrowser kurumsal profili
         profileCardContent.innerHTML = `
           <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
           <div class="corporate-profile-header">
@@ -311,8 +309,8 @@
             <p>📧 ibrowser.iletisim@gmail.com</p>
           </div>
         `;
+        document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       } else {
-        // Standart profil kartı
         profileCardContent.innerHTML = `
           <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
           <div class="profile-avatar-large" id="profileAvatarLarge"></div>
@@ -335,9 +333,8 @@
         else profileBadge.innerHTML = '';
         profileStatus.textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
         profileAvatarLarge.innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
+        document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       }
-      
-      document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
       profileModal.classList.add('show');
     }
     profileModal.addEventListener('click', e => { if (e.target === profileModal) profileModal.classList.remove('show'); });
@@ -388,7 +385,6 @@
 
     function renderContactList(users) {
       contactListDiv.innerHTML = '';
-      
       if (!users.length) { contactListDiv.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>'; return; }
       users.forEach(u => {
         const isVerified = u.username === VERIFIED_USER, isLumina = u.username === LUMINA_USERNAME, isBugHunter = u.username === BUGHUNTER_USER, isIoBrowser = u.username === IOBROWSER_USER;
@@ -398,8 +394,9 @@
         const statusText = isLumina ? 'Lumina | Groq + Llama 3.3 70B' : (isIoBrowser ? 'IoBrowser – Özgür İnternet Deneyimi' : (online ? 'çevrimiçi' : 'çevrimdışı'));
         const statusClass = isLumina ? 'lumina-status' : (online ? 'online' : 'offline');
         const unread = getUnreadCount(getCurrentUser().username, u.username);
+        const phoneText = isIoBrowser ? '' : (u.phone || '');
         const div = document.createElement('div'); div.className = 'contact-item';
-        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${avHtml}</div><div class="contact-info"><span class="contact-name name-with-badge">${u.username}${isVerified?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''}${isLumina?'<span class="ai-badge">AI</span>':''}${isBugHunter?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''}${isIoBrowser?`<span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`:''}</span><div class="contact-phone">${u.phone||''}</div><div class="contact-status ${statusClass}">${statusText}</div></div>${unread>0?`<div class="unread-badge">${unread}</div>`:''}`;
+        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${avHtml}</div><div class="contact-info"><span class="contact-name name-with-badge">${u.username}${isVerified?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''}${isLumina?'<span class="ai-badge">AI</span>':''}${isBugHunter?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''}${isIoBrowser?`<span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`:''}</span>${phoneText?`<div class="contact-phone">${phoneText}</div>`:''}<div class="contact-status ${statusClass}">${statusText}</div></div>${unread>0?`<div class="unread-badge">${unread}</div>`:''}`;
         div.addEventListener('click', ()=> openChat(u.username));
         contactListDiv.appendChild(div);
       });
@@ -482,7 +479,21 @@
       let users = getUsers();
       if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
       if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
-      if (!users.find(u=>u.username===IOBROWSER_USER)) users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO });
+      // IoBrowser varsa düzelt, yoksa ekle
+      let io = users.find(u=>u.username===IOBROWSER_USER);
+      if (io) {
+        io.phone = '';
+        io.avatar = IOBROWSER_LOGO;
+      } else {
+        users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO });
+      }
+      // Yanlış isimle kayıtlı olanı düzelt (loBrowser -> IoBrowser)
+      let wrongIo = users.find(u=>u.username==='loBrowser');
+      if (wrongIo) {
+        wrongIo.username = IOBROWSER_USER;
+        wrongIo.phone = '';
+        wrongIo.avatar = IOBROWSER_LOGO;
+      }
       saveUsers(users);
       const cu = getCurrentUser();
       if (cu) { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); setUserOnline(IOBROWSER_USER); enterApp(); }
