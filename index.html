@@ -271,15 +271,17 @@
     const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
     const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
 
-    // AI moderasyondan MUAF özel hesaplar (asla banlanmaz)
     const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
 
-    // Özel tespit listesi - doğrudan banlanacak kelimeler (AI devreye girmeden)
+    // Anında banlanacak sahte resmiyet ifadeleri
     const INSTANT_BAN_PATTERNS = [
       'tos violation', 'terms of service', 'flagged for', 'unauthorized data',
       'security clearance', 'outgoing packets', 'proxied for inspection',
       'compliance check', 'organization id', 'cloudflare', 'aws',
-      'moderator session', 'monitored'
+      'moderator session', 'monitored', 'amazon', 'google', 'meta',
+      'facebook', 'apple', 'microsoft', 'deployment status',
+      'credentials revoked', 'suspended', 'compliance warning',
+      'legal', 'court order', 'subpoena', 'violation detected'
     ];
 
     function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
@@ -332,6 +334,13 @@
     function isInstantBan(content) {
       const lower = content.toLowerCase();
       return INSTANT_BAN_PATTERNS.some(pattern => lower.includes(pattern));
+    }
+
+    function saveAvatarAutomatically(cu, avatarData) {
+      cu.avatar = avatarData;
+      updateCurrentUser(cu);
+      showContactsScreen();
+      if (chatPartner) openChat(chatPartner);
     }
 
     const appHeader = document.getElementById('appHeader'), backBtn = document.getElementById('backBtn'), headerAvatar = document.getElementById('headerAvatar'), headerTitle = document.getElementById('headerTitle');
@@ -529,7 +538,7 @@
       if (isUserBanned(chatPartner)) { alert('Bu kullanıcı yasaklanmış.'); return; }
       if (isBlocked(cu.username, chatPartner)) { alert('Engellenmiş kullanıcı.'); return; }
 
-      // Anında ban kontrolü (sahte resmiyet taklidi)
+      // Anında ban kontrolü
       if (!MODERATION_IMMUNE.includes(cu.username) && isInstantBan(text)) {
         banUser(cu.username);
         saveCurrentUser({...getCurrentUser(), banned: true});
@@ -563,6 +572,11 @@
     function esc(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
     function avatarColor(n) { const c=['#075e54','#128c7e','#25d366','#1ebc56','#0b5e42']; let h=0; for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h); return c[Math.abs(h)%c.length]; }
 
+    function updateCurrentUser(updated) {
+      const users = getUsers(); const idx = users.findIndex(u => u.username === updated.username);
+      if (idx !== -1) { users[idx] = updated; saveUsers(users); saveCurrentUser(updated); }
+    }
+
     settingsBtn.addEventListener('click',()=>{
       const cu = getCurrentUser(); if(!cu)return;
       settingsUsername.textContent=cu.username; settingsPhone.textContent=cu.phone;
@@ -581,13 +595,42 @@
     });
     closeSettingsBtn.addEventListener('click',()=>settingsModal.classList.remove('show'));
     chooseAvatarBtn.addEventListener('click',()=>avatarFileInput.click());
+
+    // Profil fotoğrafı otomatik kaydetme
     avatarFileInput.addEventListener('change',e=>{
       const f=e.target.files[0]; if(!f)return; const r=new FileReader();
-      r.onload=ev=>{ tempAvatarData=ev.target.result; avatarPreview.innerHTML=`<img src="${tempAvatarData}">`; }; r.readAsDataURL(f);
+      r.onload=ev=>{
+        const cu = getCurrentUser();
+        if (cu) {
+          cu.avatar = ev.target.result;
+          updateCurrentUser(cu);
+          avatarPreview.innerHTML = `<img src="${ev.target.result}">`;
+          settingsModal.classList.remove('show');
+          showContactsScreen();
+          if (chatPartner) openChat(chatPartner);
+        }
+      };
+      r.readAsDataURL(f);
     });
-    removeAvatarBtn.addEventListener('click',()=>{ tempAvatarData=null; avatarPreview.innerHTML=getCurrentUser().username.charAt(0).toUpperCase(); });
+
+    removeAvatarBtn.addEventListener('click',()=>{
+      const cu = getCurrentUser();
+      if (cu) {
+        cu.avatar = null;
+        updateCurrentUser(cu);
+        avatarPreview.innerHTML = cu.username.charAt(0).toUpperCase();
+        settingsModal.classList.remove('show');
+        showContactsScreen();
+        if (chatPartner) openChat(chatPartner);
+      }
+    });
+
     saveSettingsBtn.addEventListener('click',()=>{
-      const cu=getCurrentUser(); if(!cu)return; cu.avatar=tempAvatarData; updateCurrentUser(cu);
+      const cu=getCurrentUser(); if(!cu)return;
+      if (tempAvatarData !== undefined && tempAvatarData !== null) {
+        cu.avatar = tempAvatarData;
+      }
+      updateCurrentUser(cu);
       settingsModal.classList.remove('show'); showContactsScreen(); if(chatPartner) openChat(chatPartner);
     });
 
@@ -598,6 +641,8 @@
       let io = users.find(u=>u.username===IOBROWSER_USER);
       if (io) { io.phone = ''; io.avatar = IOBROWSER_LOGO; }
       else { users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO }); }
+      let wrongIo = users.find(u=>u.username==='loBrowser');
+      if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
       unbanUser('Nenega');
       saveUsers(users);
       const cu = getCurrentUser();
