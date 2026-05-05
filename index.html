@@ -2,521 +2,142 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-  <title>ChatVerse • Bulut Sohbet</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatVerse • Yayından Kalktı</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg: #eae2d6; --header-bg: #075e54; --auth-bg: #f0f2f5; --card-bg: white;
-      --text: #111; --text-secondary: #667781; --chat-bg: #e5ddd5;
-      --msg-in: white; --msg-out: #dcf8c6; --input-bg: #f0f0f0; --search-bg: white;
-      --border: #f1f1f1; --hover: #f5f5f5; --overlay: rgba(0,0,0,0.6);
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0b141a;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+      overflow: hidden;
     }
-    body.dark {
-      --bg: #0b141a; --header-bg: #1f2c33; --auth-bg: #0b141a; --card-bg: #1f2c33;
-      --text: #e9edef; --text-secondary: #8696a0; --chat-bg: #0b141a;
-      --msg-in: #1f2c33; --msg-out: #005c4b; --input-bg: #1f2c33; --search-bg: #1f2c33;
-      --border: #2a373f; --hover: #2a373f; --overlay: rgba(0,0,0,0.8);
+    
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4), transparent),
+                  radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.3), transparent),
+                  radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,0.5), transparent),
+                  radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.2), transparent),
+                  radial-gradient(1px 1px at 70% 50%, rgba(255,255,255,0.4), transparent),
+                  radial-gradient(1px 1px at 10% 60%, rgba(255,255,255,0.3), transparent),
+                  radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.5), transparent),
+                  radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,0.2), transparent),
+                  radial-gradient(1px 1px at 30% 90%, rgba(255,255,255,0.4), transparent);
+      background-size: 200px 200px;
+      animation: twinkle 3s ease-in-out infinite alternate;
     }
-    body { font-family: 'Segoe UI', sans-serif; background: #111; height: 100dvh; display: flex; justify-content: center; align-items: center; color: var(--text); }
-    .app-container { width: 100%; max-width: 450px; height: 100dvh; max-height: 100dvh; background: var(--bg); box-shadow: 0 20px 45px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-    .app-header { background: var(--header-bg); color: white; padding: 10px 14px; display: none; align-items: center; gap: 8px; min-height: 56px; z-index: 10; }
-    .app-header.visible { display: flex; }
-    .back-btn { background: none; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 4px; color: white; }
-    .back-btn.show { display: flex; }
-    .header-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
-    .header-avatar { width: 38px; height: 38px; border-radius: 50%; background: #128c7e; display: none; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; color: white; flex-shrink: 0; overflow: hidden; cursor: pointer; }
-    .header-avatar img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
-    .header-avatar.show { display: flex; }
-    .title { font-size: 1.1rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
-    .header-actions { display: flex; align-items: center; gap: 4px; }
-    .icon-btn { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-    .icon-btn:hover { background: rgba(255,255,255,0.15); }
-    .logout-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
-    .screen.active { display: flex; }
-    .auth-screen { background: var(--auth-bg); justify-content: center; align-items: center; padding: 20px; gap: 20px; }
-    .auth-logo { text-align: center; }
-    .logo-circle { width: 70px; height: 70px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
-    .auth-logo h1 { color: var(--text); font-size: 1.6rem; }
-    .auth-logo p { color: var(--text-secondary); font-size: 0.85rem; }
-    .auth-box { background: var(--card-bg); padding: 24px 20px; border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); width: 100%; max-width: 380px; }
-    .auth-box h2 { color: var(--text); margin-bottom: 18px; font-size: 1.2rem; }
-    .input-wrapper { display: flex; align-items: center; background: var(--search-bg); border-radius: 10px; padding: 0 12px; margin-bottom: 10px; border: 1px solid var(--border); }
-    .input-wrapper input { width: 100%; padding: 14px 10px; border: none; background: transparent; font-size: 0.95rem; outline: none; color: var(--text); }
-    .auth-box > button { width: 100%; background: #25d366; border: none; color: white; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1rem; margin-top: 8px; cursor: pointer; transition: 0.2s; }
-    .auth-box > button:hover { background: #1ebc56; }
-    .switch-text { margin-top: 14px; color: var(--text-secondary); font-size: 0.9rem; text-align: center; }
-    .switch-text a { color: #25d366; text-decoration: none; font-weight: bold; cursor: pointer; }
-    .search-bar { display: flex; align-items: center; background: var(--search-bg); margin: 8px 12px; padding: 8px 14px; border-radius: 25px; gap: 10px; border: 1px solid var(--border); }
-    .search-bar input { flex: 1; border: none; outline: none; font-size: 0.9rem; background: transparent; color: var(--text); }
-    .contact-list { flex: 1; overflow-y: auto; background: var(--card-bg); }
-    .contact-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.1s; gap: 12px; }
-    .contact-item:hover { background: var(--hover); }
-    .contact-avatar { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 1.2rem; overflow: hidden; cursor: pointer; }
-    .contact-avatar img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
-    .contact-info { flex: 1; overflow: hidden; }
-    .contact-name { font-weight: 500; font-size: 1rem; display: inline-flex; align-items: center; gap: 4px; color: var(--text); }
-    .contact-phone { color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px; }
-    .contact-status { font-size: 0.75rem; margin-top: 1px; }
-    .contact-status.online { color: #25d366; font-weight: 500; }
-    .contact-status.offline { color: #888; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 16px 12px; background: var(--chat-bg); display: flex; flex-direction: column; gap: 4px; }
-    .message-row { display: flex; margin-bottom: 3px; flex-direction: column; }
-    .message-row.outgoing { align-items: flex-end; }
-    .message-row.incoming { align-items: flex-start; }
-    .message-bubble { max-width: 78%; padding: 9px 13px; border-radius: 8px; font-size: 0.95rem; line-height: 1.45; word-break: break-word; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.05); color: var(--text); overflow-wrap: anywhere; }
-    .outgoing .message-bubble { background: var(--msg-out); border-radius: 8px 2px 8px 8px; }
-    .incoming .message-bubble { background: var(--msg-in); border-radius: 2px 8px 8px 8px; }
-    .message-time { display: block; text-align: right; font-size: 0.65rem; color: #888; margin-top: 2px; line-height: 1; }
-    .chat-input-area { display: flex; padding: 8px 10px; background: var(--input-bg); align-items: center; gap: 6px; flex-shrink: 0; margin-bottom: env(safe-area-inset-bottom, 0px); }
-    .chat-input-area input { flex: 1; padding: 10px 14px; border: none; border-radius: 25px; font-size: 0.95rem; outline: none; background: var(--card-bg); color: var(--text); }
-    .send-btn { background: #075e54; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .send-btn:active { background: #054d44; }
-    .modal-overlay { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay); z-index: 100; align-items: center; justify-content: center; }
-    .modal-overlay.show { display: flex; }
-    .modal-content { background: var(--card-bg); width: 90%; max-width: 380px; border-radius: 16px; overflow: hidden; }
-    .modal-header { background: var(--header-bg); color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
-    .modal-close { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-    .modal-body { padding: 20px; }
-    .setting-item { margin-bottom: 20px; }
-    .setting-item label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text); }
-    .avatar-upload { display: flex; flex-direction: column; align-items: center; }
-    .avatar-preview { width: 90px; height: 90px; border-radius: 50%; background: #e0e0e0; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2.5rem; color: white; font-weight: bold; }
-    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
-    #chooseAvatarBtn, #removeAvatarBtn, .save-btn { background: #25d366; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 6px; }
-    #removeAvatarBtn { background: #ff4d4f; }
-    .save-btn { width: 100%; margin-top: 10px; background: #075e54; }
-    .dark-mode-toggle { display: flex; justify-content: space-between; align-items: center; }
-    .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 26px; }
-    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-    input:checked + .slider { background-color: #25d366; }
-    input:checked + .slider:before { transform: translateX(22px); }
-    .profile-card { background: var(--card-bg); width: 88%; max-width: 350px; border-radius: 20px; padding: 0; text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; }
-    .profile-close { position: absolute; top: 8px; right: 14px; color: white !important; font-size: 28px; z-index: 10; }
-    .profile-avatar-large { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 14px; background: #075e54; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; font-weight: bold; overflow: hidden; }
-    .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
-    .verified-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 2px; flex-shrink: 0; }
-    .verified-badge img { width: 23px; height: 23px; object-fit: contain; pointer-events: none; user-select: none; }
-    .name-with-badge { display: inline-flex; align-items: center; vertical-align: middle; gap: 2px; }
-    .ai-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; background: #25d366; color: white; font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 12px; letter-spacing: 0.5px; pointer-events: none; user-select: none; flex-shrink: 0; }
-    .bug-hunter-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; pointer-events: none; user-select: none; flex-shrink: 0; }
-    .bug-hunter-badge img { width: 23px; height: 23px; object-fit: contain; }
-    .gold-badge { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; pointer-events: none; user-select: none; flex-shrink: 0; }
-    .gold-badge img { width: 23px; height: 23px; object-fit: contain; }
-    .lumina-status { color: #25d366 !important; font-weight: 500; font-style: italic; }
-    .corporate-profile-header { background: linear-gradient(135deg, #1a1a3e, #4a1a6b); padding: 20px; text-align: center; }
-    .corporate-profile-logo { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .corporate-profile-logo img { width: 100%; height: 100%; object-fit: cover; }
-    .corporate-profile-info { padding: 20px; text-align: left; background: var(--card-bg); }
-    .corporate-profile-info p { margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem; }
-    .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
-    .block-btn { background: #ff4d4f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-    .unblock-btn { background: #25d366; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-    .banned-fullscreen { background: #f0f2f5; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px 30px; gap: 16px; }
-    body.dark .banned-fullscreen { background: #0b141a; }
-    .banned-icon { width: 90px; height: 90px; border-radius: 50%; background: #ff4d4f; color: white; font-size: 3rem; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
-    .banned-title { font-size: 1.3rem; font-weight: 600; color: #111; line-height: 1.4; }
-    body.dark .banned-title { color: #e9edef; }
-    .banned-desc { font-size: 0.9rem; color: #667781; line-height: 1.5; max-width: 300px; }
-    .banned-appeal { background: #075e54; color: white; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 8px; }
-    .banned-logout { background: none; border: 1px solid #667781; color: #667781; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
-    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    .loading-spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #25d366; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
+    
+    @keyframes twinkle {
+      0% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 40px;
+      max-width: 500px;
+    }
+    
+    .logo-circle {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #075e54, #128c7e);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      box-shadow: 0 0 40px rgba(7, 94, 84, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(7, 94, 84, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(7, 94, 84, 0.6); }
+    }
+    
+    .logo-circle svg {
+      width: 40px;
+      height: 40px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #e9edef;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: #8696a0;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    
+    .badge {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #8696a0;
+      backdrop-filter: blur(10px);
+    }
+    
+    .footer-text {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 40px;
+    }
+    
+    .footer-text span {
+      color: #25d366;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
-<div id="loadingOverlay" class="loading-overlay"><div class="loading-spinner"></div></div>
-<div class="app-container">
-  <div class="app-header" id="appHeader">
-    <button class="back-btn" id="backBtn">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    </button>
-    <div class="header-left">
-      <div class="header-avatar" id="headerAvatar"></div>
-      <span class="title" id="headerTitle">Sohbetler</span>
+  <div class="stars"></div>
+  
+  <div class="container">
+    <div class="logo-circle">
+      <svg viewBox="0 0 24 24" fill="white">
+        <path d="M17.5 10.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0zM3 20.5c0-3.5 7-5.5 11.5-5.5s11.5 2 11.5 5.5"/>
+      </svg>
     </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="settingsBtn" title="Ayarlar">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
-      <button class="logout-btn" id="logoutBtn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-      </button>
+    
+    <h1>ChatVerse Yayından Kalktı</h1>
+    <p class="subtitle">Bu proje, bir dönemin efsanesi olarak arşivlere geçti.<br>Teşekkürler BaconPrime_Dev.</p>
+    
+    <div class="badge-row">
+      <span class="badge">🔵 Mavi Tik</span>
+      <span class="badge">🤖 AI Rozeti</span>
+      <span class="badge">🥇 Altın Rozet</span>
+      <span class="badge">🛡️ Bug Hunter</span>
     </div>
+    
+    <p class="footer-text">Bir <span>ChatVerse</span> prodüksiyonu • 2024 – 2025</p>
   </div>
-
-  <div id="authScreen" class="screen active auth-screen">
-    <div class="auth-logo">
-      <div class="logo-circle">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="white"><path d="M17.5 10.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0zM3 20.5c0-3.5 7-5.5 11.5-5.5s11.5 2 11.5 5.5"/></svg>
-      </div>
-      <h1>ChatVerse</h1>
-      <p>Bulut • Güvenli • Hızlı</p>
-    </div>
-    <div class="auth-box">
-      <h2 id="authTitle">Giriş Yap</h2>
-      <div class="input-wrapper">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <input type="text" id="usernameInput" placeholder="Kullanıcı adı" autocomplete="off">
-      </div>
-      <div class="input-wrapper">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <input type="password" id="passwordInput" placeholder="Şifre" autocomplete="off">
-      </div>
-      <button id="authActionBtn">Giriş Yap</button>
-      <p class="switch-text"><span id="switchText">Hesabın yok mu?</span> <a id="switchLink">Kayıt ol</a></p>
-    </div>
-  </div>
-
-  <div id="contactsScreen" class="screen">
-    <div class="search-bar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="searchInput" placeholder="Kişi ara...">
-    </div>
-    <div class="contact-list" id="contactList"></div>
-  </div>
-
-  <div id="chatScreen" class="screen">
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input-area">
-      <button class="icon-btn emoji-btn">😊</button>
-      <input type="text" id="messageInput" placeholder="Mesaj yaz..." autocomplete="off">
-      <button class="icon-btn attach-btn">📎</button>
-      <button class="send-btn" id="sendBtn">➤</button>
-    </div>
-  </div>
-
-  <div id="bannedScreen" class="screen banned-fullscreen">
-    <div class="banned-icon">🚫</div>
-    <h2 class="banned-title">Bu hesap Chatverse'i kullanamaz</h2>
-    <p class="banned-desc">Hesabınız askıya alınmıştır.</p>
-    <button class="banned-appeal" id="bannedAppealBtn">Gözden geçirme iste</button>
-    <button class="banned-logout" id="bannedLogoutBtn">Çıkış Yap</button>
-  </div>
-
-  <div id="settingsModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header"><h3>Ayarlar</h3><button class="modal-close" id="closeSettingsBtn">&times;</button></div>
-      <div class="modal-body">
-        <div class="setting-item"><label>Profil Fotoğrafı</label>
-          <div class="avatar-upload">
-            <div class="avatar-preview" id="avatarPreview"></div>
-            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
-            <button id="chooseAvatarBtn">Galeriden Seç</button>
-            <button id="removeAvatarBtn">Kaldır</button>
-          </div>
-        </div>
-        <div class="setting-item"><p><strong>Kullanıcı adı:</strong> <span id="settingsUsername"></span></p><p><strong>Telefon:</strong> <span id="settingsPhone"></span></p></div>
-        <div class="setting-item dark-mode-toggle"><label>Karanlık Mod</label><label class="switch"><input type="checkbox" id="darkModeCheckbox"><span class="slider round"></span></label></div>
-        <div class="setting-item"><label>Engellenen Kullanıcılar</label><div id="blockedList" style="max-height:150px;overflow-y:auto;"></div></div>
-        <button id="saveSettingsBtn" class="save-btn">Kaydet</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="profileModal" class="modal-overlay">
-    <div class="profile-card" id="profileCardContent"></div>
-  </div>
-</div>
-
-<script>
-  // Firebase
-  firebase.initializeApp({
-    apiKey: "AIzaSyCFhijUmNit7Kj0BkTEP-rRPOxBWie7xB4",
-    authDomain: "chatverse-bb294.firebaseapp.com",
-    projectId: "chatverse-bb294",
-    storageBucket: "chatverse-bb294.firebasestorage.app",
-    messagingSenderId: "100539343956",
-    appId: "1:100539343956:web:2ec1fbf7a033965c0b79c1",
-    databaseURL: "https://chatverse-bb294-default-rtdb.europe-west1.firebasedatabase.app"
-  });
-  const db = firebase.database();
-
-  const VERIFIED_USER = 'BaconPrime_Dev';
-  const BUGHUNTER_USER = 'Root_Overseer';
-  const LUMINA_USERNAME = 'Lumina';
-  const IOBROWSER_USER = 'IoBrowser';
-  const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png';
-  const BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
-  const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
-  const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
-  const BANNED_USERNAMES = ['GitHub', 'A.M.A.Z.O.N', 'Amazon', 'Google', 'Meta', 'Apple', 'Microsoft', 'FireBase', 'Firebase', 'SukunaGirl'];
-
-  let currentUser = null;
-  let chatPartner = null;
-  let tempAvatarData = null;
-  let isLogin = true;
-  let userCache = null;
-  let messagesListener = null;
-
-  function showLoading(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
-  function randomPhone() { const c = ['+90','+1','+44','+49','+33','+81','+7','+39']; return c[Math.floor(Math.random()*c.length)] + ' ' + Math.floor(100000000+Math.random()*900000000); }
-  function esc(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
-
-  async function getUsers() {
-    const snap = await db.ref('users').once('value');
-    userCache = snap.val() || {};
-    return userCache;
-  }
-
-  function showScreen(s) {
-    ['authScreen', 'contactsScreen', 'chatScreen', 'bannedScreen'].forEach(id => document.getElementById(id).classList.remove('active'));
-    document.getElementById(s.id || s).classList.add('active');
-  }
-
-  function updateHeader(title, back=false, avatar=null, initial='', partner='') {
-    const ht = document.getElementById('headerTitle');
-    if (partner === VERIFIED_USER) ht.innerHTML = `${partner} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>`;
-    else if (partner === LUMINA_USERNAME) ht.innerHTML = `${partner} <span class="ai-badge">AI</span>`;
-    else if (partner === BUGHUNTER_USER) ht.innerHTML = `${partner} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
-    else if (partner === IOBROWSER_USER) ht.innerHTML = `${partner} <span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`;
-    else ht.textContent = title;
-
-    document.getElementById('backBtn').classList.toggle('show', back);
-    const ha = document.getElementById('headerAvatar');
-    if (avatar) { ha.innerHTML = `<img src="${avatar}">`; ha.classList.add('show'); }
-    else if (initial) { ha.textContent = initial; ha.classList.add('show'); }
-    else if (partner === IOBROWSER_USER) { ha.innerHTML = `<img src="${IOBROWSER_LOGO}">`; ha.classList.add('show'); }
-    else ha.classList.remove('show');
-  }
-
-  // Auth
-  document.getElementById('switchLink').addEventListener('click', e => {
-    e.preventDefault(); isLogin = !isLogin;
-    document.getElementById('authTitle').textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
-    document.getElementById('authActionBtn').textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
-    document.getElementById('switchText').textContent = isLogin ? 'Hesabın yok mu?' : 'Zaten hesabın var mı?';
-    document.getElementById('switchLink').textContent = isLogin ? 'Kayıt ol' : 'Giriş yap';
-  });
-
-  document.getElementById('authActionBtn').addEventListener('click', async () => {
-    const u = document.getElementById('usernameInput').value.trim();
-    const p = document.getElementById('passwordInput').value.trim();
-    if (!u || !p) return alert('Kullanıcı adı ve şifre gerekli.');
-
-    if (BANNED_USERNAMES.some(b => u.toLowerCase() === b.toLowerCase())) return alert('Bu kullanıcı adı yasaklanmıştır.');
-
-    showLoading(true);
-    try {
-      const users = await getUsers();
-      const banned = (await db.ref('bannedUsers').once('value')).val() || {};
-
-      if (isLogin) {
-        const user = users[u];
-        if (!user || user.password !== p) { showLoading(false); return alert('Hatalı giriş.'); }
-        if (banned[u]) { showScreen(document.getElementById('bannedScreen')); document.getElementById('appHeader').classList.remove('visible'); showLoading(false); return; }
-        currentUser = user;
-        await db.ref('users/' + u + '/online').set(true);
-        enterApp();
-      } else {
-        if (users[u]) { showLoading(false); return alert('Bu kullanıcı adı zaten alınmış.'); }
-        const newUser = { username: u, password: p, phone: randomPhone(), avatar: null, online: true };
-        await db.ref('users/' + u).set(newUser);
-        currentUser = newUser;
-        alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`);
-        enterApp();
-      }
-      document.getElementById('usernameInput').value = '';
-      document.getElementById('passwordInput').value = '';
-    } catch(e) {
-      alert('Bağlantı hatası. Lütfen tekrar deneyin.');
-    }
-    showLoading(false);
-  });
-
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
-    if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
-    currentUser = null; chatPartner = null;
-    if (messagesListener) { messagesListener.off(); messagesListener = null; }
-    showScreen(document.getElementById('authScreen')); document.getElementById('appHeader').classList.remove('visible');
-  });
-
-  document.getElementById('backBtn').addEventListener('click', () => {
-    chatPartner = null;
-    if (messagesListener) { messagesListener.off(); messagesListener = null; }
-    showContactsScreen();
-  });
-
-  document.getElementById('bannedLogoutBtn').addEventListener('click', async () => {
-    if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
-    currentUser = null; showScreen(document.getElementById('authScreen')); document.getElementById('appHeader').classList.remove('visible');
-  });
-
-  window.addEventListener('beforeunload', async () => {
-    if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
-  });
-
-  function enterApp() { document.getElementById('appHeader').classList.add('visible'); showContactsScreen(); }
-
-  async function showContactsScreen() {
-    if (!currentUser) return;
-    showLoading(true);
-    updateHeader('Sohbetler', false, null, '', '');
-    const users = await getUsers();
-    const banned = (await db.ref('bannedUsers').once('value')).val() || {};
-
-    let list = Object.values(users).filter(x => x.username !== currentUser.username && !banned[x.username] && !BANNED_USERNAMES.some(b => b.toLowerCase() === x.username.toLowerCase()));
-
-    for (let x of list) {
-      const key = [currentUser.username, x.username].sort().join('_');
-      const snap = await db.ref('messages/' + key + '/lastTime').once('value');
-      x.lastTime = snap.val() || 0;
-    }
-    list.sort((a,b) => b.lastTime - a.lastTime);
-
-    const cl = document.getElementById('contactList');
-    cl.innerHTML = '';
-    if (!list.length) {
-      cl.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>';
-    } else {
-      list.forEach(x => {
-        const isV = x.username === VERIFIED_USER, isL = x.username === LUMINA_USERNAME, isB = x.username === BUGHUNTER_USER, isI = x.username === IOBROWSER_USER;
-        const av = isI ? `<img src="${IOBROWSER_LOGO}">` : (x.avatar ? `<img src="${x.avatar}">` : x.username.charAt(0).toUpperCase());
-        const bg = isI ? 'transparent' : (x.avatar ? 'transparent' : '#075e54');
-        const online = isL || isI || x.online;
-        const status = isL ? 'Lumina AI' : (isI ? 'IoBrowser' : (online ? 'çevrimiçi' : 'çevrimdışı'));
-        const cls = (isL || isI || online) ? 'online' : 'offline';
-        const div = document.createElement('div');
-        div.className = 'contact-item';
-        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${av}</div>
-          <div class="contact-info">
-            <span class="contact-name name-with-badge">${x.username} ${isV?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''} ${isL?'<span class="ai-badge">AI</span>':''} ${isB?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''} ${isI?`<span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`:''}</span>
-            <div class="contact-phone">${x.phone||''}</div>
-            <div class="contact-status ${cls}">${status}</div>
-          </div>`;
-        div.addEventListener('click', () => openChat(x.username));
-        cl.appendChild(div);
-      });
-    }
-    showScreen(document.getElementById('contactsScreen'));
-    showLoading(false);
-  }
-
-  function openChat(partner) {
-    if (!currentUser) return;
-    chatPartner = partner;
-    const p = userCache[partner];
-    updateHeader(partner, true, p?.avatar||null, '', partner);
-    showScreen(document.getElementById('chatScreen'));
-
-    if (messagesListener) messagesListener.off();
-    const key = [currentUser.username, partner].sort().join('_');
-    messagesListener = db.ref('messages/' + key);
-    messagesListener.on('value', snap => {
-      const msgs = snap.val() || [];
-      const cm = document.getElementById('chatMessages');
-      cm.innerHTML = '';
-      msgs.forEach(m => {
-        if (typeof m === 'object' && m.from) {
-          const d = new Date(m.time);
-          const t = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-          const me = m.from === currentUser.username;
-          const row = document.createElement('div');
-          row.className = `message-row ${me?'outgoing':'incoming'}`;
-          row.innerHTML = `<div class="message-bubble">${esc(m.text)}<span class="message-time">${t}</span></div>`;
-          cm.appendChild(row);
-        }
-      });
-      cm.scrollTop = cm.scrollHeight;
-    });
-  }
-
-  document.getElementById('sendBtn').addEventListener('click', sendMsg);
-  document.getElementById('messageInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendMsg(); });
-
-  async function sendMsg() {
-    const text = document.getElementById('messageInput').value.trim();
-    if (!text || !chatPartner || !currentUser) return;
-    document.getElementById('messageInput').value = '';
-
-    const key = [currentUser.username, chatPartner].sort().join('_');
-    const ref = db.ref('messages/' + key);
-    const msg = { from: currentUser.username, text, time: Date.now() };
-
-    try {
-      const snap = await ref.once('value');
-      const msgs = snap.val() || [];
-      msgs.push(msg);
-      await ref.set(msgs);
-      await db.ref('messages/' + key + '/lastTime').set(Date.now());
-
-      if (chatPartner === LUMINA_USERNAME) {
-        const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
-          method:'POST', headers:{'Content-Type':'application/json','X-API-Key':'test-api-key-mira-001'},
-          body: JSON.stringify({ message: text, user: currentUser.username })
-        });
-        const data = await res.json();
-        let reply = (data.reply||data.message||'Üzgünüm...').replace(/\*\*/g,'');
-        msgs.push({ from: LUMINA_USERNAME, text: reply, time: Date.now() });
-        await ref.set(msgs);
-      }
-    } catch(e) {
-      alert('Mesaj gönderilemedi. Lütfen tekrar deneyin.');
-    }
-  }
-
-  // Ayarlar (kısa tutuldu, gerekirse genişletilir)
-  document.getElementById('settingsBtn').addEventListener('click', () => {
-    if (!currentUser) return;
-    document.getElementById('settingsUsername').textContent = currentUser.username;
-    document.getElementById('settingsPhone').textContent = currentUser.phone;
-    const ap = document.getElementById('avatarPreview');
-    ap.innerHTML = currentUser.avatar ? `<img src="${currentUser.avatar}">` : currentUser.username.charAt(0).toUpperCase();
-    tempAvatarData = currentUser.avatar;
-    document.getElementById('darkModeCheckbox').checked = document.body.classList.contains('dark');
-    document.getElementById('settingsModal').classList.add('show');
-  });
-  document.getElementById('closeSettingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.remove('show'));
-  document.getElementById('chooseAvatarBtn').addEventListener('click', () => document.getElementById('avatarFileInput').click());
-  document.getElementById('avatarFileInput').addEventListener('change', e => {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => { tempAvatarData = ev.target.result; document.getElementById('avatarPreview').innerHTML = `<img src="${tempAvatarData}">`; };
-    r.readAsDataURL(f);
-  });
-  document.getElementById('removeAvatarBtn').addEventListener('click', () => {
-    tempAvatarData = null; document.getElementById('avatarPreview').innerHTML = currentUser.username.charAt(0).toUpperCase();
-  });
-  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-    if (!currentUser) return;
-    currentUser.avatar = tempAvatarData;
-    await db.ref('users/' + currentUser.username).update({ avatar: tempAvatarData });
-    userCache = null;
-    document.getElementById('settingsModal').classList.remove('show');
-    showContactsScreen();
-  });
-
-  function applyDark(on) { document.body.classList.toggle('dark', on); localStorage.setItem('cv_dark', on); }
-  document.getElementById('darkModeCheckbox').addEventListener('change', function() { applyDark(this.checked); });
-
-  (async function init() {
-    showLoading(true);
-    try {
-      const savedDark = localStorage.getItem('cv_dark') === 'true';
-      applyDark(savedDark);
-      document.getElementById('darkModeCheckbox').checked = savedDark;
-
-      // Sadece bir kere özel hesapları oluştur (silme yok!)
-      const users = await getUsers();
-      if (!users[VERIFIED_USER]) await db.ref('users/' + VERIFIED_USER).set({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null, online: false });
-      if (!users[LUMINA_USERNAME]) await db.ref('users/' + LUMINA_USERNAME).set({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL, online: true });
-      if (!users[IOBROWSER_USER]) await db.ref('users/' + IOBROWSER_USER).set({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO, online: true });
-
-      const banned = (await db.ref('bannedUsers').once('value')).val() || {};
-      if (banned['Nenega']) await db.ref('bannedUsers/Nenega').remove();
-    } catch(e) {
-      alert('Sunucuya bağlanırken bir hata oluştu. Lütfen sayfayı yenileyin.');
-    }
-    showLoading(false);
-    showScreen(document.getElementById('authScreen'));
-  })();
-</script>
 </body>
 </html>
