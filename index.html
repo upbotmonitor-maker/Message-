@@ -63,7 +63,6 @@
     .contact-status { font-size: 0.75rem; margin-top: 1px; }
     .contact-status.online { color: #25d366; font-weight: 500; }
     .contact-status.offline { color: #888; }
-    .unread-badge { background: #25d366; color: white; border-radius: 50%; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; padding: 0 4px; flex-shrink: 0; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 16px 12px; background: var(--chat-bg); display: flex; flex-direction: column; gap: 4px; }
     .message-row { display: flex; margin-bottom: 3px; flex-direction: column; }
     .message-row.outgoing { align-items: flex-end; }
@@ -126,10 +125,14 @@
     .banned-desc { font-size: 0.9rem; color: #667781; line-height: 1.5; max-width: 300px; }
     .banned-appeal { background: #075e54; color: white; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 8px; }
     .banned-logout { background: none; border: 1px solid #667781; color: #667781; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .loading-spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #25d366; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
 </head>
 <body>
+<div id="loadingOverlay" class="loading-overlay"><div class="loading-spinner"></div></div>
 <div class="app-container">
   <div class="app-header" id="appHeader">
     <button class="back-btn" id="backBtn">
@@ -236,7 +239,6 @@
   });
   const db = firebase.database();
 
-  // Sabitler
   const VERIFIED_USER = 'BaconPrime_Dev';
   const BUGHUNTER_USER = 'Root_Overseer';
   const LUMINA_USERNAME = 'Lumina';
@@ -245,147 +247,119 @@
   const BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
   const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
   const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
-  const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
-
-  // Yasaklı kullanıcı adları
   const BANNED_USERNAMES = ['GitHub', 'A.M.A.Z.O.N', 'Amazon', 'Google', 'Meta', 'Apple', 'Microsoft', 'FireBase', 'Firebase', 'SukunaGirl'];
-
-  // UI
-  const appHeader = document.getElementById('appHeader');
-  const backBtn = document.getElementById('backBtn');
-  const headerAvatar = document.getElementById('headerAvatar');
-  const headerTitle = document.getElementById('headerTitle');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const authScreen = document.getElementById('authScreen');
-  const contactsScreen = document.getElementById('contactsScreen');
-  const chatScreen = document.getElementById('chatScreen');
-  const bannedScreen = document.getElementById('bannedScreen');
-  const usernameInput = document.getElementById('usernameInput');
-  const passwordInput = document.getElementById('passwordInput');
-  const authActionBtn = document.getElementById('authActionBtn');
-  const switchText = document.getElementById('switchText');
-  const switchLink = document.getElementById('switchLink');
-  const searchInput = document.getElementById('searchInput');
-  const contactListDiv = document.getElementById('contactList');
-  const chatMessages = document.getElementById('chatMessages');
-  const messageInput = document.getElementById('messageInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const settingsModal = document.getElementById('settingsModal');
-  const avatarPreview = document.getElementById('avatarPreview');
-  const darkModeCheckbox = document.getElementById('darkModeCheckbox');
-  const bannedLogoutBtn = document.getElementById('bannedLogoutBtn');
 
   let currentUser = null;
   let chatPartner = null;
   let tempAvatarData = null;
   let isLogin = true;
   let userCache = null;
-  let userCacheTime = 0;
+  let messagesListener = null;
 
-  function randomPhone() {
-    const c = ['+90','+1','+44','+49','+33','+81','+7','+39'];
-    return c[Math.floor(Math.random()*c.length)] + ' ' + Math.floor(100000000+Math.random()*900000000);
-  }
-
+  function showLoading(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
+  function randomPhone() { const c = ['+90','+1','+44','+49','+33','+81','+7','+39']; return c[Math.floor(Math.random()*c.length)] + ' ' + Math.floor(100000000+Math.random()*900000000); }
   function esc(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
 
-  // Firebase
-  async function getUsers(force = false) {
-    if (!force && userCache && Date.now() - userCacheTime < 3000) return userCache;
+  async function getUsers() {
     const snap = await db.ref('users').once('value');
     userCache = snap.val() || {};
-    userCacheTime = Date.now();
     return userCache;
   }
 
-  // Ekran
   function showScreen(s) {
-    [authScreen, contactsScreen, chatScreen, bannedScreen].forEach(x => x.classList.remove('active'));
-    s.classList.add('active');
+    ['authScreen', 'contactsScreen', 'chatScreen', 'bannedScreen'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(s.id || s).classList.add('active');
   }
 
   function updateHeader(title, back=false, avatar=null, initial='', partner='') {
-    if (partner === VERIFIED_USER) headerTitle.innerHTML = `${partner} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>`;
-    else if (partner === LUMINA_USERNAME) headerTitle.innerHTML = `${partner} <span class="ai-badge">AI</span>`;
-    else if (partner === BUGHUNTER_USER) headerTitle.innerHTML = `${partner} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
-    else if (partner === IOBROWSER_USER) headerTitle.innerHTML = `${partner} <span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`;
-    else headerTitle.textContent = title;
+    const ht = document.getElementById('headerTitle');
+    if (partner === VERIFIED_USER) ht.innerHTML = `${partner} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>`;
+    else if (partner === LUMINA_USERNAME) ht.innerHTML = `${partner} <span class="ai-badge">AI</span>`;
+    else if (partner === BUGHUNTER_USER) ht.innerHTML = `${partner} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
+    else if (partner === IOBROWSER_USER) ht.innerHTML = `${partner} <span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`;
+    else ht.textContent = title;
 
-    backBtn.classList.toggle('show', back);
-    if (avatar) { headerAvatar.innerHTML = `<img src="${avatar}">`; headerAvatar.classList.add('show'); }
-    else if (initial) { headerAvatar.textContent = initial; headerAvatar.classList.add('show'); }
-    else if (partner === IOBROWSER_USER) { headerAvatar.innerHTML = `<img src="${IOBROWSER_LOGO}">`; headerAvatar.classList.add('show'); }
-    else headerAvatar.classList.remove('show');
+    document.getElementById('backBtn').classList.toggle('show', back);
+    const ha = document.getElementById('headerAvatar');
+    if (avatar) { ha.innerHTML = `<img src="${avatar}">`; ha.classList.add('show'); }
+    else if (initial) { ha.textContent = initial; ha.classList.add('show'); }
+    else if (partner === IOBROWSER_USER) { ha.innerHTML = `<img src="${IOBROWSER_LOGO}">`; ha.classList.add('show'); }
+    else ha.classList.remove('show');
   }
 
   // Auth
-  switchLink.addEventListener('click', e => {
-    e.preventDefault();
-    isLogin = !isLogin;
+  document.getElementById('switchLink').addEventListener('click', e => {
+    e.preventDefault(); isLogin = !isLogin;
     document.getElementById('authTitle').textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
-    authActionBtn.textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
-    switchText.textContent = isLogin ? 'Hesabın yok mu?' : 'Zaten hesabın var mı?';
-    switchLink.textContent = isLogin ? 'Kayıt ol' : 'Giriş yap';
+    document.getElementById('authActionBtn').textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
+    document.getElementById('switchText').textContent = isLogin ? 'Hesabın yok mu?' : 'Zaten hesabın var mı?';
+    document.getElementById('switchLink').textContent = isLogin ? 'Kayıt ol' : 'Giriş yap';
   });
 
-  authActionBtn.addEventListener('click', async () => {
-    const u = usernameInput.value.trim();
-    const p = passwordInput.value.trim();
+  document.getElementById('authActionBtn').addEventListener('click', async () => {
+    const u = document.getElementById('usernameInput').value.trim();
+    const p = document.getElementById('passwordInput').value.trim();
     if (!u || !p) return alert('Kullanıcı adı ve şifre gerekli.');
 
-    // Yasaklı kullanıcı adı kontrolü
-    if (BANNED_USERNAMES.some(banned => u.toLowerCase() === banned.toLowerCase())) {
-      return alert('Bu kullanıcı adı yasaklanmıştır. Lütfen farklı bir kullanıcı adı seçin.');
-    }
+    if (BANNED_USERNAMES.some(b => u.toLowerCase() === b.toLowerCase())) return alert('Bu kullanıcı adı yasaklanmıştır.');
 
-    const users = await getUsers(true);
-    const banned = (await db.ref('bannedUsers').once('value')).val() || {};
+    showLoading(true);
+    try {
+      const users = await getUsers();
+      const banned = (await db.ref('bannedUsers').once('value')).val() || {};
 
-    if (isLogin) {
-      const user = users[u];
-      if (!user || user.password !== p) return alert('Hatalı giriş.');
-      if (banned[u]) { showScreen(bannedScreen); appHeader.classList.remove('visible'); return; }
-      currentUser = user;
-      await db.ref('users/' + u + '/online').set(true);
-      enterApp();
-    } else {
-      if (users[u]) return alert('Bu kullanıcı adı zaten alınmış.');
-      const newUser = { username: u, password: p, phone: randomPhone(), avatar: null, online: true };
-      await db.ref('users/' + u).set(newUser);
-      currentUser = newUser;
-      alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`);
-      enterApp();
+      if (isLogin) {
+        const user = users[u];
+        if (!user || user.password !== p) { showLoading(false); return alert('Hatalı giriş.'); }
+        if (banned[u]) { showScreen(document.getElementById('bannedScreen')); document.getElementById('appHeader').classList.remove('visible'); showLoading(false); return; }
+        currentUser = user;
+        await db.ref('users/' + u + '/online').set(true);
+        enterApp();
+      } else {
+        if (users[u]) { showLoading(false); return alert('Bu kullanıcı adı zaten alınmış.'); }
+        const newUser = { username: u, password: p, phone: randomPhone(), avatar: null, online: true };
+        await db.ref('users/' + u).set(newUser);
+        currentUser = newUser;
+        alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`);
+        enterApp();
+      }
+      document.getElementById('usernameInput').value = '';
+      document.getElementById('passwordInput').value = '';
+    } catch(e) {
+      alert('Bağlantı hatası. Lütfen tekrar deneyin.');
     }
-    usernameInput.value = '';
-    passwordInput.value = '';
+    showLoading(false);
   });
 
-  // Çıkış
-  logoutBtn.addEventListener('click', async () => {
-    if (currentUser) {
-      await db.ref('users/' + currentUser.username + '/online').set(false);
-    }
-    currentUser = null; chatPartner = null;
-    showScreen(authScreen); appHeader.classList.remove('visible');
-  });
-
-  backBtn.addEventListener('click', () => { chatPartner = null; showContactsScreen(); });
-  bannedLogoutBtn.addEventListener('click', async () => {
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
     if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
-    currentUser = null; showScreen(authScreen); appHeader.classList.remove('visible');
+    currentUser = null; chatPartner = null;
+    if (messagesListener) { messagesListener.off(); messagesListener = null; }
+    showScreen(document.getElementById('authScreen')); document.getElementById('appHeader').classList.remove('visible');
+  });
+
+  document.getElementById('backBtn').addEventListener('click', () => {
+    chatPartner = null;
+    if (messagesListener) { messagesListener.off(); messagesListener = null; }
+    showContactsScreen();
+  });
+
+  document.getElementById('bannedLogoutBtn').addEventListener('click', async () => {
+    if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
+    currentUser = null; showScreen(document.getElementById('authScreen')); document.getElementById('appHeader').classList.remove('visible');
   });
 
   window.addEventListener('beforeunload', async () => {
     if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
   });
 
-  function enterApp() { appHeader.classList.add('visible'); showContactsScreen(); }
+  function enterApp() { document.getElementById('appHeader').classList.add('visible'); showContactsScreen(); }
 
   async function showContactsScreen() {
     if (!currentUser) return;
+    showLoading(true);
     updateHeader('Sohbetler', false, null, '', '');
-    userCache = null;
-    const users = await getUsers(true);
+    const users = await getUsers();
     const banned = (await db.ref('bannedUsers').once('value')).val() || {};
 
     let list = Object.values(users).filter(x => x.username !== currentUser.username && !banned[x.username] && !BANNED_USERNAMES.some(b => b.toLowerCase() === x.username.toLowerCase()));
@@ -397,15 +371,13 @@
     }
     list.sort((a,b) => b.lastTime - a.lastTime);
 
-    contactListDiv.innerHTML = '';
+    const cl = document.getElementById('contactList');
+    cl.innerHTML = '';
     if (!list.length) {
-      contactListDiv.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>';
+      cl.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>';
     } else {
       list.forEach(x => {
-        const isV = x.username === VERIFIED_USER;
-        const isL = x.username === LUMINA_USERNAME;
-        const isB = x.username === BUGHUNTER_USER;
-        const isI = x.username === IOBROWSER_USER;
+        const isV = x.username === VERIFIED_USER, isL = x.username === LUMINA_USERNAME, isB = x.username === BUGHUNTER_USER, isI = x.username === IOBROWSER_USER;
         const av = isI ? `<img src="${IOBROWSER_LOGO}">` : (x.avatar ? `<img src="${x.avatar}">` : x.username.charAt(0).toUpperCase());
         const bg = isI ? 'transparent' : (x.avatar ? 'transparent' : '#075e54');
         const online = isL || isI || x.online;
@@ -420,24 +392,27 @@
             <div class="contact-status ${cls}">${status}</div>
           </div>`;
         div.addEventListener('click', () => openChat(x.username));
-        contactListDiv.appendChild(div);
+        cl.appendChild(div);
       });
     }
-    showScreen(contactsScreen);
+    showScreen(document.getElementById('contactsScreen'));
+    showLoading(false);
   }
 
   function openChat(partner) {
     if (!currentUser) return;
     chatPartner = partner;
-    const users = userCache || {};
-    const p = users[partner];
+    const p = userCache[partner];
     updateHeader(partner, true, p?.avatar||null, '', partner);
-    showScreen(chatScreen);
+    showScreen(document.getElementById('chatScreen'));
 
+    if (messagesListener) messagesListener.off();
     const key = [currentUser.username, partner].sort().join('_');
-    db.ref('messages/' + key).on('value', snap => {
+    messagesListener = db.ref('messages/' + key);
+    messagesListener.on('value', snap => {
       const msgs = snap.val() || [];
-      chatMessages.innerHTML = '';
+      const cm = document.getElementById('chatMessages');
+      cm.innerHTML = '';
       msgs.forEach(m => {
         if (typeof m === 'object' && m.from) {
           const d = new Date(m.time);
@@ -446,32 +421,33 @@
           const row = document.createElement('div');
           row.className = `message-row ${me?'outgoing':'incoming'}`;
           row.innerHTML = `<div class="message-bubble">${esc(m.text)}<span class="message-time">${t}</span></div>`;
-          chatMessages.appendChild(row);
+          cm.appendChild(row);
         }
       });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      cm.scrollTop = cm.scrollHeight;
     });
   }
 
-  sendBtn.addEventListener('click', sendMsg);
-  messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMsg(); });
+  document.getElementById('sendBtn').addEventListener('click', sendMsg);
+  document.getElementById('messageInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendMsg(); });
 
   async function sendMsg() {
-    const text = messageInput.value.trim();
+    const text = document.getElementById('messageInput').value.trim();
     if (!text || !chatPartner || !currentUser) return;
-    const msg = { from: currentUser.username, text, time: Date.now() };
+    document.getElementById('messageInput').value = '';
 
     const key = [currentUser.username, chatPartner].sort().join('_');
     const ref = db.ref('messages/' + key);
-    const snap = await ref.once('value');
-    const msgs = snap.val() || [];
-    msgs.push(msg);
-    await ref.set(msgs);
-    await db.ref('messages/' + key + '/lastTime').set(Date.now());
-    messageInput.value = '';
+    const msg = { from: currentUser.username, text, time: Date.now() };
 
-    if (chatPartner === LUMINA_USERNAME) {
-      try {
+    try {
+      const snap = await ref.once('value');
+      const msgs = snap.val() || [];
+      msgs.push(msg);
+      await ref.set(msgs);
+      await db.ref('messages/' + key + '/lastTime').set(Date.now());
+
+      if (chatPartner === LUMINA_USERNAME) {
         const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
           method:'POST', headers:{'Content-Type':'application/json','X-API-Key':'test-api-key-mira-001'},
           body: JSON.stringify({ message: text, user: currentUser.username })
@@ -480,62 +456,66 @@
         let reply = (data.reply||data.message||'Üzgünüm...').replace(/\*\*/g,'');
         msgs.push({ from: LUMINA_USERNAME, text: reply, time: Date.now() });
         await ref.set(msgs);
-      } catch(e) {}
+      }
+    } catch(e) {
+      alert('Mesaj gönderilemedi. Lütfen tekrar deneyin.');
     }
   }
 
-  // Ayarlar
+  // Ayarlar (kısa tutuldu, gerekirse genişletilir)
   document.getElementById('settingsBtn').addEventListener('click', () => {
     if (!currentUser) return;
     document.getElementById('settingsUsername').textContent = currentUser.username;
     document.getElementById('settingsPhone').textContent = currentUser.phone;
-    avatarPreview.innerHTML = currentUser.avatar ? `<img src="${currentUser.avatar}">` : currentUser.username.charAt(0).toUpperCase();
+    const ap = document.getElementById('avatarPreview');
+    ap.innerHTML = currentUser.avatar ? `<img src="${currentUser.avatar}">` : currentUser.username.charAt(0).toUpperCase();
     tempAvatarData = currentUser.avatar;
-    darkModeCheckbox.checked = document.body.classList.contains('dark');
-    settingsModal.classList.add('show');
+    document.getElementById('darkModeCheckbox').checked = document.body.classList.contains('dark');
+    document.getElementById('settingsModal').classList.add('show');
   });
-
-  document.getElementById('closeSettingsBtn').addEventListener('click', () => settingsModal.classList.remove('show'));
+  document.getElementById('closeSettingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.remove('show'));
   document.getElementById('chooseAvatarBtn').addEventListener('click', () => document.getElementById('avatarFileInput').click());
-
   document.getElementById('avatarFileInput').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = ev => { tempAvatarData = ev.target.result; avatarPreview.innerHTML = `<img src="${tempAvatarData}">`; };
+    r.onload = ev => { tempAvatarData = ev.target.result; document.getElementById('avatarPreview').innerHTML = `<img src="${tempAvatarData}">`; };
     r.readAsDataURL(f);
   });
-
   document.getElementById('removeAvatarBtn').addEventListener('click', () => {
-    tempAvatarData = null; avatarPreview.innerHTML = currentUser.username.charAt(0).toUpperCase();
+    tempAvatarData = null; document.getElementById('avatarPreview').innerHTML = currentUser.username.charAt(0).toUpperCase();
   });
-
   document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
     if (!currentUser) return;
     currentUser.avatar = tempAvatarData;
     await db.ref('users/' + currentUser.username).update({ avatar: tempAvatarData });
     userCache = null;
-    settingsModal.classList.remove('show');
+    document.getElementById('settingsModal').classList.remove('show');
     showContactsScreen();
   });
 
-  // Karanlık mod
   function applyDark(on) { document.body.classList.toggle('dark', on); localStorage.setItem('cv_dark', on); }
-  darkModeCheckbox.addEventListener('change', () => applyDark(darkModeCheckbox.checked));
+  document.getElementById('darkModeCheckbox').addEventListener('change', function() { applyDark(this.checked); });
 
   (async function init() {
-    const savedDark = localStorage.getItem('cv_dark') === 'true';
-    applyDark(savedDark);
-    darkModeCheckbox.checked = savedDark;
+    showLoading(true);
+    try {
+      const savedDark = localStorage.getItem('cv_dark') === 'true';
+      applyDark(savedDark);
+      document.getElementById('darkModeCheckbox').checked = savedDark;
 
-    // Veritabanını temizle ve sadece özel hesapları yeniden oluştur
-    await db.ref('/').remove();
+      // Sadece bir kere özel hesapları oluştur (silme yok!)
+      const users = await getUsers();
+      if (!users[VERIFIED_USER]) await db.ref('users/' + VERIFIED_USER).set({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null, online: false });
+      if (!users[LUMINA_USERNAME]) await db.ref('users/' + LUMINA_USERNAME).set({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL, online: true });
+      if (!users[IOBROWSER_USER]) await db.ref('users/' + IOBROWSER_USER).set({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO, online: true });
 
-    // Özel hesapları yeniden ekle
-    await db.ref('users/' + VERIFIED_USER).set({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null, online: false });
-    await db.ref('users/' + LUMINA_USERNAME).set({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL, online: true });
-    await db.ref('users/' + IOBROWSER_USER).set({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO, online: true });
-
-    showScreen(authScreen);
+      const banned = (await db.ref('bannedUsers').once('value')).val() || {};
+      if (banned['Nenega']) await db.ref('bannedUsers/Nenega').remove();
+    } catch(e) {
+      alert('Sunucuya bağlanırken bir hata oluştu. Lütfen sayfayı yenileyin.');
+    }
+    showLoading(false);
+    showScreen(document.getElementById('authScreen'));
   })();
 </script>
 </body>
