@@ -224,7 +224,7 @@
 </div>
 
 <script>
-  // Firebase yapılandırması
+  // Firebase
   firebase.initializeApp({
     apiKey: "AIzaSyCFhijUmNit7Kj0BkTEP-rRPOxBWie7xB4",
     authDomain: "chatverse-bb294.firebaseapp.com",
@@ -246,6 +246,9 @@
   const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
   const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
   const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
+
+  // Yasaklı kullanıcı adları
+  const BANNED_USERNAMES = ['GitHub', 'A.M.A.Z.O.N', 'Amazon', 'Google', 'Meta', 'Apple', 'Microsoft', 'FireBase', 'Firebase', 'SukunaGirl'];
 
   // UI
   const appHeader = document.getElementById('appHeader');
@@ -286,29 +289,13 @@
 
   function esc(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
 
-  // Firebase helpers
+  // Firebase
   async function getUsers(force = false) {
     if (!force && userCache && Date.now() - userCacheTime < 3000) return userCache;
     const snap = await db.ref('users').once('value');
     userCache = snap.val() || {};
     userCacheTime = Date.now();
     return userCache;
-  }
-
-  async function messageListener(userA, userB, callback) {
-    const key = [userA, userB].sort().join('_');
-    db.ref('messages/' + key).on('value', snap => {
-      callback(snap.val() || []);
-    });
-  }
-
-  async function sendMessageAndListen(userA, userB, msg) {
-    const key = [userA, userB].sort().join('_');
-    const ref = db.ref('messages/' + key);
-    const snap = await ref.once('value');
-    const msgs = snap.val() || [];
-    msgs.push(msg);
-    await ref.set(msgs);
   }
 
   // Ekran
@@ -345,6 +332,11 @@
     const u = usernameInput.value.trim();
     const p = passwordInput.value.trim();
     if (!u || !p) return alert('Kullanıcı adı ve şifre gerekli.');
+
+    // Yasaklı kullanıcı adı kontrolü
+    if (BANNED_USERNAMES.some(banned => u.toLowerCase() === banned.toLowerCase())) {
+      return alert('Bu kullanıcı adı yasaklanmıştır. Lütfen farklı bir kullanıcı adı seçin.');
+    }
 
     const users = await getUsers(true);
     const banned = (await db.ref('bannedUsers').once('value')).val() || {};
@@ -396,9 +388,8 @@
     const users = await getUsers(true);
     const banned = (await db.ref('bannedUsers').once('value')).val() || {};
 
-    let list = Object.values(users).filter(x => x.username !== currentUser.username && !banned[x.username]);
+    let list = Object.values(users).filter(x => x.username !== currentUser.username && !banned[x.username] && !BANNED_USERNAMES.some(b => b.toLowerCase() === x.username.toLowerCase()));
 
-    // son mesaj zamanı için hızlıca kontrol
     for (let x of list) {
       const key = [currentUser.username, x.username].sort().join('_');
       const snap = await db.ref('messages/' + key + '/lastTime').once('value');
@@ -536,13 +527,13 @@
     applyDark(savedDark);
     darkModeCheckbox.checked = savedDark;
 
-    const users = await getUsers(true);
-    if (!users[VERIFIED_USER]) await db.ref('users/' + VERIFIED_USER).set({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null, online: false });
-    if (!users[LUMINA_USERNAME]) await db.ref('users/' + LUMINA_USERNAME).set({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL, online: true });
-    if (!users[IOBROWSER_USER]) await db.ref('users/' + IOBROWSER_USER).set({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO, online: true });
+    // Veritabanını temizle ve sadece özel hesapları yeniden oluştur
+    await db.ref('/').remove();
 
-    const banned = (await db.ref('bannedUsers').once('value')).val() || {};
-    if (banned['Nenega']) await db.ref('bannedUsers/Nenega').remove();
+    // Özel hesapları yeniden ekle
+    await db.ref('users/' + VERIFIED_USER).set({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null, online: false });
+    await db.ref('users/' + LUMINA_USERNAME).set({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL, online: true });
+    await db.ref('users/' + IOBROWSER_USER).set({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO, online: true });
 
     showScreen(authScreen);
   })();
