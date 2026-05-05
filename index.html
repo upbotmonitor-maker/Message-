@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-  <title>ChatVerse • Sohbet</title>
+  <title>ChatVerse • Bulut Sohbet</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -22,7 +24,7 @@
     .app-container { width: 100%; max-width: 450px; height: 100dvh; max-height: 100dvh; background: var(--bg); box-shadow: 0 20px 45px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; position: relative; }
     .app-header { background: var(--header-bg); color: white; padding: 10px 14px; display: none; align-items: center; gap: 8px; min-height: 56px; z-index: 10; }
     .app-header.visible { display: flex; }
-    .back-btn { background: none; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 4px; }
+    .back-btn { background: none; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 4px; color: white; }
     .back-btn.show { display: flex; }
     .header-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
     .header-avatar { width: 38px; height: 38px; border-radius: 50%; background: #128c7e; display: none; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; color: white; flex-shrink: 0; overflow: hidden; cursor: pointer; }
@@ -50,7 +52,6 @@
     .switch-text a { color: #25d366; text-decoration: none; font-weight: bold; cursor: pointer; }
     .search-bar { display: flex; align-items: center; background: var(--search-bg); margin: 8px 12px; padding: 8px 14px; border-radius: 25px; gap: 10px; border: 1px solid var(--border); }
     .search-bar input { flex: 1; border: none; outline: none; font-size: 0.9rem; background: transparent; color: var(--text); }
-    .search-bar input::placeholder { color: var(--text-secondary); }
     .contact-list { flex: 1; overflow-y: auto; background: var(--card-bg); }
     .contact-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.1s; gap: 12px; }
     .contact-item:hover { background: var(--hover); }
@@ -75,7 +76,6 @@
     .chat-input-area input { flex: 1; padding: 10px 14px; border: none; border-radius: 25px; font-size: 0.95rem; outline: none; background: var(--card-bg); color: var(--text); }
     .send-btn { background: #075e54; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
     .send-btn:active { background: #054d44; }
-    .emoji-btn, .attach-btn { flex-shrink: 0; }
     .modal-overlay { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.show { display: flex; }
     .modal-content { background: var(--card-bg); width: 90%; max-width: 380px; border-radius: 16px; overflow: hidden; }
@@ -115,542 +115,437 @@
     .corporate-profile-logo img { width: 100%; height: 100%; object-fit: cover; }
     .corporate-profile-info { padding: 20px; text-align: left; background: var(--card-bg); }
     .corporate-profile-info p { margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem; }
-    .corporate-profile-info .bio { font-weight: 500; color: var(--text); }
     .corporate-profile-link { color: #4285F4; text-decoration: none; font-weight: bold; display: block; margin-top: 10px; }
     .block-btn { background: #ff4d4f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .unblock-btn { background: #25d366; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-    .banned-fullscreen {
-      background: #f0f2f5; flex-direction: column; justify-content: center;
-      align-items: center; text-align: center; padding: 40px 30px; gap: 16px;
-    }
+    .banned-fullscreen { background: #f0f2f5; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px 30px; gap: 16px; }
     body.dark .banned-fullscreen { background: #0b141a; }
-    .banned-icon {
-      width: 90px; height: 90px; border-radius: 50%; background: #ff4d4f;
-      color: white; font-size: 3rem; display: flex; align-items: center;
-      justify-content: center; margin-bottom: 8px;
-    }
+    .banned-icon { width: 90px; height: 90px; border-radius: 50%; background: #ff4d4f; color: white; font-size: 3rem; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
     .banned-title { font-size: 1.3rem; font-weight: 600; color: #111; line-height: 1.4; }
     body.dark .banned-title { color: #e9edef; }
     .banned-desc { font-size: 0.9rem; color: #667781; line-height: 1.5; max-width: 300px; }
-    .banned-appeal {
-      background: #075e54; color: white; border: none; padding: 12px 24px;
-      border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 8px;
-    }
-    .banned-logout {
-      background: none; border: 1px solid #667781; color: #667781;
-      padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer;
-    }
+    .banned-appeal { background: #075e54; color: white; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 8px; }
+    .banned-logout { background: none; border: 1px solid #667781; color: #667781; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
     @media (max-width: 500px) { .app-container { max-width: 100%; border-radius: 0; } }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <div class="app-header" id="appHeader">
-      <button class="back-btn" id="backBtn">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+<div class="app-container">
+  <div class="app-header" id="appHeader">
+    <button class="back-btn" id="backBtn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="header-left">
+      <div class="header-avatar" id="headerAvatar"></div>
+      <span class="title" id="headerTitle">Sohbetler</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="settingsBtn" title="Ayarlar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
-      <div class="header-left">
-        <div class="header-avatar" id="headerAvatar"></div>
-        <span class="title" id="headerTitle">Sohbetler</span>
-      </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="settingsBtn" title="Ayarlar">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-        <button class="logout-btn" id="logoutBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div id="authScreen" class="screen active auth-screen">
-      <div class="auth-logo">
-        <div class="logo-circle">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="white"><path d="M17.5 10.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0zM3 20.5c0-3.5 7-5.5 11.5-5.5s11.5 2 11.5 5.5"/></svg>
-        </div>
-        <h1>ChatVerse</h1>
-        <p>Güvenli ve hızlı mesajlaşma</p>
-      </div>
-      <div class="auth-box">
-        <h2 id="authTitle">Giriş Yap</h2>
-        <div class="input-wrapper">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <input type="text" id="usernameInput" placeholder="Kullanıcı adı" autocomplete="off">
-        </div>
-        <div class="input-wrapper">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <input type="password" id="passwordInput" placeholder="Şifre" autocomplete="off">
-        </div>
-        <button id="authActionBtn">Giriş Yap</button>
-        <p class="switch-text">
-          <span id="switchText">Hesabın yok mu?</span>
-          <a id="switchLink">Kayıt ol</a>
-        </p>
-      </div>
-    </div>
-
-    <div id="contactsScreen" class="screen">
-      <div class="search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="searchInput" placeholder="Kişi ara...">
-      </div>
-      <div class="contact-list" id="contactList"></div>
-    </div>
-
-    <div id="chatScreen" class="screen">
-      <div class="chat-messages" id="chatMessages"></div>
-      <div class="chat-input-area">
-        <button class="icon-btn emoji-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-        </button>
-        <input type="text" id="messageInput" placeholder="Mesaj yaz..." autocomplete="off">
-        <button class="icon-btn attach-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
-        <button class="send-btn" id="sendBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div id="bannedScreen" class="screen banned-fullscreen">
-      <div class="banned-icon">🚫</div>
-      <h2 class="banned-title">Bu hesap Chatverse'i kullanamaz</h2>
-      <p class="banned-desc">Hesap etkinliğinizin Hizmet Şartlarımızı ihlal ettiğini tespit ettik. Hesabınız askıya alınmıştır.</p>
-      <button class="banned-appeal" id="bannedAppealBtn">Gözden geçirme iste</button>
-      <button class="banned-logout" id="bannedLogoutBtn">Çıkış Yap</button>
-    </div>
-
-    <div id="settingsModal" class="modal-overlay">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Ayarlar</h3>
-          <button class="modal-close" id="closeSettingsBtn">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="setting-item">
-            <label>Profil Fotoğrafı</label>
-            <div class="avatar-upload">
-              <div class="avatar-preview" id="avatarPreview"></div>
-              <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
-              <button id="chooseAvatarBtn">Galeriden Seç</button>
-              <button id="removeAvatarBtn" style="background:#ccc; margin-top:6px;">Kaldır</button>
-            </div>
-          </div>
-          <div class="setting-item">
-            <p><strong>Kullanıcı adı:</strong> <span id="settingsUsername"></span></p>
-            <p><strong>Telefon:</strong> <span id="settingsPhone"></span></p>
-          </div>
-          <div class="setting-item dark-mode-toggle">
-            <label>Karanlık Mod</label>
-            <label class="switch">
-              <input type="checkbox" id="darkModeCheckbox">
-              <span class="slider round"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>Engellenen Kullanıcılar</label>
-            <div id="blockedList" style="max-height: 150px; overflow-y: auto;"></div>
-          </div>
-          <button id="saveSettingsBtn" class="save-btn">Kaydet</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="profileModal" class="modal-overlay">
-      <div class="profile-card" id="profileCardContent"></div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
     </div>
   </div>
 
-  <script>
-    // ==================== LOCAL STORAGE ====================
-    const USERS_KEY = 'cv_users', MESSAGES_PREFIX = 'cv_msg_', CURRENT_USER_KEY = 'cv_current', ONLINE_USERS_KEY = 'cv_online', DARK_MODE_KEY = 'cv_dark';
-    const BLOCKED_KEY = 'cv_blocked_', BANNED_USERS_KEY = 'cv_banned_users';
-    const VERIFIED_USER = 'BaconPrime_Dev', BUGHUNTER_USER = 'Root_Overseer', LUMINA_USERNAME = 'Lumina';
-    const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png', BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
-    const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
-    const IOBROWSER_USER = 'IoBrowser', IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
+  <div id="authScreen" class="screen active auth-screen">
+    <div class="auth-logo">
+      <div class="logo-circle">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="white"><path d="M17.5 10.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0zM3 20.5c0-3.5 7-5.5 11.5-5.5s11.5 2 11.5 5.5"/></svg>
+      </div>
+      <h1>ChatVerse</h1>
+      <p>Bulut • Güvenli • Hızlı</p>
+    </div>
+    <div class="auth-box">
+      <h2 id="authTitle">Giriş Yap</h2>
+      <div class="input-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="usernameInput" placeholder="Kullanıcı adı" autocomplete="off">
+      </div>
+      <div class="input-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="passwordInput" placeholder="Şifre" autocomplete="off">
+      </div>
+      <button id="authActionBtn">Giriş Yap</button>
+      <p class="switch-text"><span id="switchText">Hesabın yok mu?</span> <a id="switchLink">Kayıt ol</a></p>
+    </div>
+  </div>
 
-    const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
+  <div id="contactsScreen" class="screen">
+    <div class="search-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Kişi ara...">
+    </div>
+    <div class="contact-list" id="contactList"></div>
+  </div>
 
-    // Anında banlanacak sahte resmiyet ifadeleri
-    const INSTANT_BAN_PATTERNS = [
-      'tos violation', 'terms of service', 'flagged for', 'unauthorized data',
-      'security clearance', 'outgoing packets', 'proxied for inspection',
-      'compliance check', 'organization id', 'cloudflare', 'aws',
-      'moderator session', 'monitored', 'amazon', 'google', 'meta',
-      'facebook', 'apple', 'microsoft', 'deployment status',
-      'credentials revoked', 'suspended', 'compliance warning',
-      'legal', 'court order', 'subpoena', 'violation detected'
-    ];
+  <div id="chatScreen" class="screen">
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <button class="icon-btn emoji-btn">😊</button>
+      <input type="text" id="messageInput" placeholder="Mesaj yaz..." autocomplete="off">
+      <button class="icon-btn attach-btn">📎</button>
+      <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+  </div>
 
-    function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
-    function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
-    function getCurrentUser() { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }
-    function saveCurrentUser(u) { localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(u)); }
-    function clearCurrentUser() { localStorage.removeItem(CURRENT_USER_KEY); }
-    function getOnlineUsers() { return JSON.parse(localStorage.getItem(ONLINE_USERS_KEY)) || {}; }
-    function setUserOnline(username) { const o = getOnlineUsers(); o[username] = Date.now(); localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(o)); }
-    function setUserOffline(username) { const o = getOnlineUsers(); delete o[username]; localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(o)); }
-    function isUserOnline(username) { return !!getOnlineUsers()[username]; }
-    function getUnreadCount(cu, p) { return parseInt(localStorage.getItem(`unread_${cu}_${p}`) || '0'); }
-    function incrementUnread(cu, p) { const k = `unread_${cu}_${p}`; localStorage.setItem(k, (parseInt(localStorage.getItem(k)||'0'))+1); }
-    function resetUnread(cu, p) { localStorage.setItem(`unread_${cu}_${p}`, '0'); }
-    const codes = ['+90','+1','+44','+49','+33','+81','+7','+39'];
-    function randomPhone() { return codes[Math.floor(Math.random()*codes.length)] + ' ' + Math.floor(100000000+Math.random()*900000000); }
-    function chatKey(a,b) { const s=[a,b].sort(); return MESSAGES_PREFIX+s[0]+'_'+s[1]; }
-    function getMsgs(a,b) { return JSON.parse(localStorage.getItem(chatKey(a,b)))||[]; }
-    function saveMsgs(a,b,msgs) { localStorage.setItem(chatKey(a,b), JSON.stringify(msgs)); }
+  <div id="bannedScreen" class="screen banned-fullscreen">
+    <div class="banned-icon">🚫</div>
+    <h2 class="banned-title">Bu hesap Chatverse'i kullanamaz</h2>
+    <p class="banned-desc">Hesabınız askıya alınmıştır.</p>
+    <button class="banned-appeal" id="bannedAppealBtn">Gözden geçirme iste</button>
+    <button class="banned-logout" id="bannedLogoutBtn">Çıkış Yap</button>
+  </div>
 
-    function getBlockedList(username) { return JSON.parse(localStorage.getItem(BLOCKED_KEY + username)) || []; }
-    function blockUser(currentUser, targetUser) {
-      const blocked = getBlockedList(currentUser);
-      if (!blocked.includes(targetUser)) { blocked.push(targetUser); localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked)); return true; }
-      return false;
-    }
-    function unblockUser(currentUser, targetUser) {
-      let blocked = getBlockedList(currentUser);
-      blocked = blocked.filter(u => u !== targetUser);
-      localStorage.setItem(BLOCKED_KEY + currentUser, JSON.stringify(blocked));
-    }
-    function isBlocked(currentUser, targetUser) { return getBlockedList(currentUser).includes(targetUser); }
-
-    function getBannedUsers() { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY)) || []; }
-    function banUser(username) {
-      if (MODERATION_IMMUNE.includes(username)) return;
-      const banned = getBannedUsers();
-      if (!banned.includes(username)) {
-        banned.push(username);
-        localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
-      }
-    }
-    function unbanUser(username) {
-      let banned = getBannedUsers();
-      banned = banned.filter(u => u !== username);
-      localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(banned));
-    }
-    function isUserBanned(username) { return getBannedUsers().includes(username); }
-
-    function isInstantBan(content) {
-      const lower = content.toLowerCase();
-      return INSTANT_BAN_PATTERNS.some(pattern => lower.includes(pattern));
-    }
-
-    function saveAvatarAutomatically(cu, avatarData) {
-      cu.avatar = avatarData;
-      updateCurrentUser(cu);
-      showContactsScreen();
-      if (chatPartner) openChat(chatPartner);
-    }
-
-    const appHeader = document.getElementById('appHeader'), backBtn = document.getElementById('backBtn'), headerAvatar = document.getElementById('headerAvatar'), headerTitle = document.getElementById('headerTitle');
-    const settingsBtn = document.getElementById('settingsBtn'), logoutBtn = document.getElementById('logoutBtn');
-    const authScreen = document.getElementById('authScreen'), contactsScreen = document.getElementById('contactsScreen'), chatScreen = document.getElementById('chatScreen');
-    const bannedScreen = document.getElementById('bannedScreen');
-    const authTitle = document.getElementById('authTitle'), usernameInput = document.getElementById('usernameInput'), passwordInput = document.getElementById('passwordInput'), authActionBtn = document.getElementById('authActionBtn'), switchText = document.getElementById('switchText'), switchLink = document.getElementById('switchLink');
-    const searchInput = document.getElementById('searchInput'), contactListDiv = document.getElementById('contactList'), chatMessages = document.getElementById('chatMessages'), messageInput = document.getElementById('messageInput'), sendBtn = document.getElementById('sendBtn');
-    const settingsModal = document.getElementById('settingsModal'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), avatarPreview = document.getElementById('avatarPreview'), avatarFileInput = document.getElementById('avatarFileInput'), chooseAvatarBtn = document.getElementById('chooseAvatarBtn'), removeAvatarBtn = document.getElementById('removeAvatarBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), settingsUsername = document.getElementById('settingsUsername'), settingsPhone = document.getElementById('settingsPhone'), darkModeCheckbox = document.getElementById('darkModeCheckbox'), blockedListDiv = document.getElementById('blockedList');
-    const profileModal = document.getElementById('profileModal'), profileCardContent = document.getElementById('profileCardContent');
-    const bannedAppealBtn = document.getElementById('bannedAppealBtn'), bannedLogoutBtn = document.getElementById('bannedLogoutBtn');
-
-    let isLogin = true, chatPartner = null, tempAvatarData = null;
-
-    document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IMG') e.preventDefault(); });
-    document.addEventListener('dragstart', e => { if (e.target.tagName === 'IMG') e.preventDefault(); });
-
-    function applyDarkMode(enabled) { document.body.classList.toggle('dark', enabled); localStorage.setItem(DARK_MODE_KEY, enabled); }
-    (function(){ const saved = localStorage.getItem(DARK_MODE_KEY)==='true'; applyDarkMode(saved); if(darkModeCheckbox) darkModeCheckbox.checked = saved; })();
-    darkModeCheckbox.addEventListener('change', ()=> applyDarkMode(darkModeCheckbox.checked));
-
-    function showScreen(s) {
-      authScreen.classList.remove('active'); contactsScreen.classList.remove('active');
-      chatScreen.classList.remove('active'); bannedScreen.classList.remove('active');
-      s.classList.add('active');
-    }
-
-    function updateHeaderUI(titleText, showBack=false, avatarSrc=null, initial='', partnerUsername='') {
-      if (partnerUsername === VERIFIED_USER) headerTitle.innerHTML = `${partnerUsername} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png" alt="✓"></span>`;
-      else if (partnerUsername === LUMINA_USERNAME) headerTitle.innerHTML = `${partnerUsername} <span class="ai-badge">AI</span>`;
-      else if (partnerUsername === BUGHUNTER_USER) headerTitle.innerHTML = `${partnerUsername} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}" alt="Bug Hunter"></span>`;
-      else if (partnerUsername === IOBROWSER_USER) headerTitle.innerHTML = `${partnerUsername} <span class="gold-badge"><img src="${GOLD_BADGE_URL}" alt="Altın"></span>`;
-      else headerTitle.textContent = titleText;
-      backBtn.classList.toggle('show', showBack);
-      if (avatarSrc) { headerAvatar.innerHTML = `<img src="${avatarSrc}" alt="pf">`; headerAvatar.classList.add('show'); }
-      else if (initial) { headerAvatar.innerHTML = ''; headerAvatar.textContent = initial; headerAvatar.classList.add('show'); }
-      else if (partnerUsername === IOBROWSER_USER) { headerAvatar.innerHTML = `<img src="${IOBROWSER_LOGO}" alt="pf">`; headerAvatar.classList.add('show'); }
-      else headerAvatar.classList.remove('show');
-      headerAvatar.onclick = () => { if (partnerUsername) showProfileCard(partnerUsername); };
-    }
-
-    function showProfileCard(username) {
-      const cu = getCurrentUser(); if (!cu) return;
-      const user = getUsers().find(u => u.username === username);
-      if (!user) return;
-      const isUserBlocked = isBlocked(cu.username, username);
-      if (username === IOBROWSER_USER) {
-        profileCardContent.innerHTML = `
-          <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
-          <div class="corporate-profile-header">
-            <div class="corporate-profile-logo"><img src="${IOBROWSER_LOGO}" alt="IoBrowser"></div>
-            <h2 style="color:white;">IoBrowser <span class="gold-badge"><img src="${GOLD_BADGE_URL}" style="width:23px;height:23px;"></span></h2>
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Ayarlar</h3><button class="modal-close" id="closeSettingsBtn">&times;</button></div>
+      <div class="modal-body">
+        <div class="setting-item"><label>Profil Fotoğrafı</label>
+          <div class="avatar-upload">
+            <div class="avatar-preview" id="avatarPreview"></div>
+            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+            <button id="chooseAvatarBtn">Galeriden Seç</button>
+            <button id="removeAvatarBtn">Kaldır</button>
           </div>
-          <div class="corporate-profile-info">
-            <p class="bio">IoBrowser – Özgür İnternet Deneyimi</p>
-            <p class="bio">Gelişmiş proxy • Reklamsız • Hızlı</p>
-            <p class="bio">Resmî hesap</p>
-            <p>🌐 <a href="https://upbotmonitor-maker.github.io/IoBrowser/" target="_blank" class="corporate-profile-link">Web Sitesini Ziyaret Et</a></p>
-            <p>📧 ibrowser.iletisim@gmail.com</p>
-          </div>
-        `;
-      } else {
-        profileCardContent.innerHTML = `
-          <button class="modal-close profile-close" id="closeProfileBtn">&times;</button>
-          <div class="profile-avatar-large" id="profileAvatarLarge"></div>
-          <h2 id="profileName"></h2>
-          <div id="profileBadge" style="margin-bottom:6px;"></div>
-          <p id="profilePhone"></p>
-          <p id="profileStatus" style="color:#667781; font-size:0.9rem;"></p>
-          ${username !== VERIFIED_USER && username !== LUMINA_USERNAME ? `<button class="block-btn" id="blockToggleBtn">${isUserBlocked ? 'Engeli Kaldır' : 'Engelle'}</button>` : ''}
-        `;
-        document.getElementById('profileName').textContent = user.username;
-        document.getElementById('profilePhone').textContent = user.phone || '—';
-        if (user.username === VERIFIED_USER) document.getElementById('profileBadge').innerHTML = '<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png">';
-        else if (user.username === LUMINA_USERNAME) document.getElementById('profileBadge').innerHTML = '<span class="ai-badge">AI</span>';
-        else if (user.username === BUGHUNTER_USER) document.getElementById('profileBadge').innerHTML = `<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}">`;
-        else document.getElementById('profileBadge').innerHTML = '';
-        document.getElementById('profileStatus').textContent = user.username === LUMINA_USERNAME ? 'Lumina | Groq + Llama 3.3 70B' : (isUserOnline(user.username) ? 'çevrimiçi' : 'çevrimdışı');
-        document.getElementById('profileAvatarLarge').innerHTML = user.avatar ? `<img src="${user.avatar}">` : user.username.charAt(0).toUpperCase();
-        const blockToggleBtn = document.getElementById('blockToggleBtn');
-        if (blockToggleBtn) {
-          blockToggleBtn.addEventListener('click', () => {
-            if (isBlocked(cu.username, username)) { unblockUser(cu.username, username); alert(`${username} engeli kaldırıldı.`); }
-            else { blockUser(cu.username, username); alert(`${username} engellendi.`); }
-            profileModal.classList.remove('show'); showContactsScreen();
-          });
-        }
-      }
-      document.getElementById('closeProfileBtn').addEventListener('click', ()=> profileModal.classList.remove('show'));
-      profileModal.classList.add('show');
+        </div>
+        <div class="setting-item"><p><strong>Kullanıcı adı:</strong> <span id="settingsUsername"></span></p><p><strong>Telefon:</strong> <span id="settingsPhone"></span></p></div>
+        <div class="setting-item dark-mode-toggle"><label>Karanlık Mod</label><label class="switch"><input type="checkbox" id="darkModeCheckbox"><span class="slider round"></span></label></div>
+        <div class="setting-item"><label>Engellenen Kullanıcılar</label><div id="blockedList" style="max-height:150px;overflow-y:auto;"></div></div>
+        <button id="saveSettingsBtn" class="save-btn">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="modal-overlay">
+    <div class="profile-card" id="profileCardContent"></div>
+  </div>
+</div>
+
+<script>
+  // Firebase yapılandırması
+  firebase.initializeApp({
+    apiKey: "AIzaSyCFhijUmNit7Kj0BkTEP-rRPOxBWie7xB4",
+    authDomain: "chatverse-bb294.firebaseapp.com",
+    projectId: "chatverse-bb294",
+    storageBucket: "chatverse-bb294.firebasestorage.app",
+    messagingSenderId: "100539343956",
+    appId: "1:100539343956:web:2ec1fbf7a033965c0b79c1",
+    databaseURL: "https://chatverse-bb294-default-rtdb.europe-west1.firebasedatabase.app"
+  });
+  const db = firebase.database();
+
+  // Sabitler
+  const VERIFIED_USER = 'BaconPrime_Dev';
+  const BUGHUNTER_USER = 'Root_Overseer';
+  const LUMINA_USERNAME = 'Lumina';
+  const IOBROWSER_USER = 'IoBrowser';
+  const LUMINA_AVATAR_URL = 'https://i.imgur.com/1I0n5Id.png';
+  const BUGHUNTER_ICON_URL = 'https://i.imgur.com/I7av1dq.png';
+  const GOLD_BADGE_URL = 'https://i.imgur.com/Wl4wdKa.png';
+  const IOBROWSER_LOGO = 'https://i.imgur.com/NMBNZ4r.jpeg';
+  const MODERATION_IMMUNE = [VERIFIED_USER, BUGHUNTER_USER, LUMINA_USERNAME, IOBROWSER_USER, 'Nenega'];
+
+  // UI
+  const appHeader = document.getElementById('appHeader');
+  const backBtn = document.getElementById('backBtn');
+  const headerAvatar = document.getElementById('headerAvatar');
+  const headerTitle = document.getElementById('headerTitle');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const authScreen = document.getElementById('authScreen');
+  const contactsScreen = document.getElementById('contactsScreen');
+  const chatScreen = document.getElementById('chatScreen');
+  const bannedScreen = document.getElementById('bannedScreen');
+  const usernameInput = document.getElementById('usernameInput');
+  const passwordInput = document.getElementById('passwordInput');
+  const authActionBtn = document.getElementById('authActionBtn');
+  const switchText = document.getElementById('switchText');
+  const switchLink = document.getElementById('switchLink');
+  const searchInput = document.getElementById('searchInput');
+  const contactListDiv = document.getElementById('contactList');
+  const chatMessages = document.getElementById('chatMessages');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const settingsModal = document.getElementById('settingsModal');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const darkModeCheckbox = document.getElementById('darkModeCheckbox');
+  const bannedLogoutBtn = document.getElementById('bannedLogoutBtn');
+
+  let currentUser = null;
+  let chatPartner = null;
+  let tempAvatarData = null;
+  let isLogin = true;
+  let userCache = null;
+  let userCacheTime = 0;
+
+  function randomPhone() {
+    const c = ['+90','+1','+44','+49','+33','+81','+7','+39'];
+    return c[Math.floor(Math.random()*c.length)] + ' ' + Math.floor(100000000+Math.random()*900000000);
+  }
+
+  function esc(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
+
+  // Firebase helpers
+  async function getUsers(force = false) {
+    if (!force && userCache && Date.now() - userCacheTime < 3000) return userCache;
+    const snap = await db.ref('users').once('value');
+    userCache = snap.val() || {};
+    userCacheTime = Date.now();
+    return userCache;
+  }
+
+  async function messageListener(userA, userB, callback) {
+    const key = [userA, userB].sort().join('_');
+    db.ref('messages/' + key).on('value', snap => {
+      callback(snap.val() || []);
+    });
+  }
+
+  async function sendMessageAndListen(userA, userB, msg) {
+    const key = [userA, userB].sort().join('_');
+    const ref = db.ref('messages/' + key);
+    const snap = await ref.once('value');
+    const msgs = snap.val() || [];
+    msgs.push(msg);
+    await ref.set(msgs);
+  }
+
+  // Ekran
+  function showScreen(s) {
+    [authScreen, contactsScreen, chatScreen, bannedScreen].forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+  }
+
+  function updateHeader(title, back=false, avatar=null, initial='', partner='') {
+    if (partner === VERIFIED_USER) headerTitle.innerHTML = `${partner} <span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>`;
+    else if (partner === LUMINA_USERNAME) headerTitle.innerHTML = `${partner} <span class="ai-badge">AI</span>`;
+    else if (partner === BUGHUNTER_USER) headerTitle.innerHTML = `${partner} <span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`;
+    else if (partner === IOBROWSER_USER) headerTitle.innerHTML = `${partner} <span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`;
+    else headerTitle.textContent = title;
+
+    backBtn.classList.toggle('show', back);
+    if (avatar) { headerAvatar.innerHTML = `<img src="${avatar}">`; headerAvatar.classList.add('show'); }
+    else if (initial) { headerAvatar.textContent = initial; headerAvatar.classList.add('show'); }
+    else if (partner === IOBROWSER_USER) { headerAvatar.innerHTML = `<img src="${IOBROWSER_LOGO}">`; headerAvatar.classList.add('show'); }
+    else headerAvatar.classList.remove('show');
+  }
+
+  // Auth
+  switchLink.addEventListener('click', e => {
+    e.preventDefault();
+    isLogin = !isLogin;
+    document.getElementById('authTitle').textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
+    authActionBtn.textContent = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
+    switchText.textContent = isLogin ? 'Hesabın yok mu?' : 'Zaten hesabın var mı?';
+    switchLink.textContent = isLogin ? 'Kayıt ol' : 'Giriş yap';
+  });
+
+  authActionBtn.addEventListener('click', async () => {
+    const u = usernameInput.value.trim();
+    const p = passwordInput.value.trim();
+    if (!u || !p) return alert('Kullanıcı adı ve şifre gerekli.');
+
+    const users = await getUsers(true);
+    const banned = (await db.ref('bannedUsers').once('value')).val() || {};
+
+    if (isLogin) {
+      const user = users[u];
+      if (!user || user.password !== p) return alert('Hatalı giriş.');
+      if (banned[u]) { showScreen(bannedScreen); appHeader.classList.remove('visible'); return; }
+      currentUser = user;
+      await db.ref('users/' + u + '/online').set(true);
+      enterApp();
+    } else {
+      if (users[u]) return alert('Bu kullanıcı adı zaten alınmış.');
+      const newUser = { username: u, password: p, phone: randomPhone(), avatar: null, online: true };
+      await db.ref('users/' + u).set(newUser);
+      currentUser = newUser;
+      alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`);
+      enterApp();
     }
-    profileModal.addEventListener('click', e => { if (e.target === profileModal) profileModal.classList.remove('show'); });
+    usernameInput.value = '';
+    passwordInput.value = '';
+  });
 
-    switchLink.addEventListener('click', e => {
-      e.preventDefault(); isLogin = !isLogin;
-      if (isLogin) { authTitle.textContent='Giriş Yap'; authActionBtn.textContent='Giriş Yap'; switchText.textContent='Hesabın yok mu?'; switchLink.textContent='Kayıt ol'; }
-      else { authTitle.textContent='Kayıt Ol'; authActionBtn.textContent='Kayıt Ol'; switchText.textContent='Zaten hesabın var mı?'; switchLink.textContent='Giriş yap'; }
-    });
-
-    authActionBtn.addEventListener('click', () => {
-      const username = usernameInput.value.trim(), password = passwordInput.value.trim();
-      if (!username || !password) return alert('Kullanıcı adı ve şifre gerekli.');
-      let users = getUsers();
-      if (isLogin) {
-        const user = users.find(u => u.username === username && u.password === password);
-        if (!user) return alert('Hatalı giriş.');
-        saveCurrentUser(user);
-        if (isUserBanned(username)) { showScreen(bannedScreen); appHeader.classList.remove('visible'); return; }
-        setUserOnline(user.username); enterApp();
-      } else {
-        if (users.some(u => u.username === username)) return alert('Kullanıcı adı alınmış.');
-        const newUser = { username, password, phone: randomPhone(), avatar: null };
-        users.push(newUser); saveUsers(users); saveCurrentUser(newUser); setUserOnline(newUser.username);
-        alert(`Kayıt başarılı!\nNumaran: ${newUser.phone}`); enterApp();
-      }
-      usernameInput.value = ''; passwordInput.value = '';
-    });
-
-    bannedAppealBtn.addEventListener('click', () => alert('İtirazınız alındı.\n\nE-posta: destek@chatverse.com'));
-    bannedLogoutBtn.addEventListener('click', () => { clearCurrentUser(); showScreen(authScreen); appHeader.classList.remove('visible'); });
-
-    logoutBtn.addEventListener('click', ()=>{
-      const cu = getCurrentUser(); if(cu) setUserOffline(cu.username);
-      clearCurrentUser(); chatPartner = null; showScreen(authScreen); appHeader.classList.remove('visible');
-    });
-    backBtn.addEventListener('click', ()=>{ if(chatPartner) resetUnread(getCurrentUser().username, chatPartner); chatPartner=null; showContactsScreen(); });
-    window.addEventListener('beforeunload', ()=>{ const cu = getCurrentUser(); if(cu) setUserOffline(cu.username); });
-
-    function enterApp() { appHeader.classList.add('visible'); showContactsScreen(); }
-
-    function showContactsScreen() {
-      const cu = getCurrentUser(); if (!cu) { showScreen(authScreen); return; }
-      updateHeaderUI('Sohbetler', false, null, '', '');
-      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username) && !isUserBanned(u.username));
-      users.sort((a,b)=>{
-        const msgsA = getMsgs(cu.username, a.username), timeA = msgsA.length ? msgsA[msgsA.length-1].time : 0;
-        const msgsB = getMsgs(cu.username, b.username), timeB = msgsB.length ? msgsB[msgsB.length-1].time : 0;
-        return timeB - timeA;
-      });
-      renderContactList(users);
-      showScreen(contactsScreen);
+  // Çıkış
+  logoutBtn.addEventListener('click', async () => {
+    if (currentUser) {
+      await db.ref('users/' + currentUser.username + '/online').set(false);
     }
+    currentUser = null; chatPartner = null;
+    showScreen(authScreen); appHeader.classList.remove('visible');
+  });
 
-    function renderContactList(users) {
-      contactListDiv.innerHTML = '';
-      if (!users.length) { contactListDiv.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>'; return; }
-      users.forEach(u => {
-        const isVerified = u.username === VERIFIED_USER, isLumina = u.username === LUMINA_USERNAME, isBugHunter = u.username === BUGHUNTER_USER, isIoBrowser = u.username === IOBROWSER_USER;
-        const avHtml = isIoBrowser ? `<img src="${IOBROWSER_LOGO}">` : (u.avatar ? `<img src="${u.avatar}">` : u.username.charAt(0).toUpperCase());
-        const bg = isIoBrowser ? 'transparent' : (u.avatar ? 'transparent' : avatarColor(u.username));
-        const online = isLumina || isIoBrowser || isUserOnline(u.username);
-        const statusText = isLumina ? 'Lumina | Groq + Llama 3.3 70B' : (isIoBrowser ? 'IoBrowser – Özgür İnternet Deneyimi' : (online ? 'çevrimiçi' : 'çevrimdışı'));
-        const statusClass = isLumina ? 'lumina-status' : (online ? 'online' : 'offline');
-        const unread = getUnreadCount(getCurrentUser().username, u.username);
-        const phoneText = isIoBrowser ? '' : (u.phone || '');
-        const div = document.createElement('div'); div.className = 'contact-item';
-        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${avHtml}</div><div class="contact-info"><span class="contact-name name-with-badge">${u.username}${isVerified?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''}${isLumina?'<span class="ai-badge">AI</span>':''}${isBugHunter?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''}${isIoBrowser?`<span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`:''}</span>${phoneText?`<div class="contact-phone">${phoneText}</div>`:''}<div class="contact-status ${statusClass}">${statusText}</div></div>${unread>0?`<div class="unread-badge">${unread}</div>`:''}`;
-        div.addEventListener('click', ()=> openChat(u.username));
+  backBtn.addEventListener('click', () => { chatPartner = null; showContactsScreen(); });
+  bannedLogoutBtn.addEventListener('click', async () => {
+    if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
+    currentUser = null; showScreen(authScreen); appHeader.classList.remove('visible');
+  });
+
+  window.addEventListener('beforeunload', async () => {
+    if (currentUser) await db.ref('users/' + currentUser.username + '/online').set(false);
+  });
+
+  function enterApp() { appHeader.classList.add('visible'); showContactsScreen(); }
+
+  async function showContactsScreen() {
+    if (!currentUser) return;
+    updateHeader('Sohbetler', false, null, '', '');
+    userCache = null;
+    const users = await getUsers(true);
+    const banned = (await db.ref('bannedUsers').once('value')).val() || {};
+
+    let list = Object.values(users).filter(x => x.username !== currentUser.username && !banned[x.username]);
+
+    // son mesaj zamanı için hızlıca kontrol
+    for (let x of list) {
+      const key = [currentUser.username, x.username].sort().join('_');
+      const snap = await db.ref('messages/' + key + '/lastTime').once('value');
+      x.lastTime = snap.val() || 0;
+    }
+    list.sort((a,b) => b.lastTime - a.lastTime);
+
+    contactListDiv.innerHTML = '';
+    if (!list.length) {
+      contactListDiv.innerHTML = '<div style="padding:30px;text-align:center;">Henüz kayıtlı kullanıcı yok.</div>';
+    } else {
+      list.forEach(x => {
+        const isV = x.username === VERIFIED_USER;
+        const isL = x.username === LUMINA_USERNAME;
+        const isB = x.username === BUGHUNTER_USER;
+        const isI = x.username === IOBROWSER_USER;
+        const av = isI ? `<img src="${IOBROWSER_LOGO}">` : (x.avatar ? `<img src="${x.avatar}">` : x.username.charAt(0).toUpperCase());
+        const bg = isI ? 'transparent' : (x.avatar ? 'transparent' : '#075e54');
+        const online = isL || isI || x.online;
+        const status = isL ? 'Lumina AI' : (isI ? 'IoBrowser' : (online ? 'çevrimiçi' : 'çevrimdışı'));
+        const cls = (isL || isI || online) ? 'online' : 'offline';
+        const div = document.createElement('div');
+        div.className = 'contact-item';
+        div.innerHTML = `<div class="contact-avatar" style="background:${bg}">${av}</div>
+          <div class="contact-info">
+            <span class="contact-name name-with-badge">${x.username} ${isV?'<span class="verified-badge"><img src="https://i.imgur.com/14PqZwx.png"></span>':''} ${isL?'<span class="ai-badge">AI</span>':''} ${isB?`<span class="bug-hunter-badge"><img src="${BUGHUNTER_ICON_URL}"></span>`:''} ${isI?`<span class="gold-badge"><img src="${GOLD_BADGE_URL}"></span>`:''}</span>
+            <div class="contact-phone">${x.phone||''}</div>
+            <div class="contact-status ${cls}">${status}</div>
+          </div>`;
+        div.addEventListener('click', () => openChat(x.username));
         contactListDiv.appendChild(div);
       });
     }
+    showScreen(contactsScreen);
+  }
 
-    searchInput.addEventListener('input', ()=>{
-      const cu = getCurrentUser(); if(!cu) return;
-      const q = searchInput.value.toLowerCase();
-      let users = getUsers().filter(u => u.username !== cu.username && !isBlocked(cu.username, u.username) && !isUserBanned(u.username) && u.username.toLowerCase().includes(q));
-      renderContactList(users);
-    });
+  function openChat(partner) {
+    if (!currentUser) return;
+    chatPartner = partner;
+    const users = userCache || {};
+    const p = users[partner];
+    updateHeader(partner, true, p?.avatar||null, '', partner);
+    showScreen(chatScreen);
 
-    function openChat(partner) {
-      const cu = getCurrentUser(); if (!cu) return;
-      if (isUserBanned(partner)) { alert('Bu kullanıcı platformdan yasaklanmıştır.'); return; }
-      if (isBlocked(cu.username, partner)) { alert('Bu kullanıcıyı engellediğiniz için mesajlaşamazsınız.'); return; }
-      chatPartner = partner; resetUnread(cu.username, partner);
-      const partnerUser = getUsers().find(u => u.username === partner);
-      updateHeaderUI(partner, true, partnerUser?.avatar||null, partner===LUMINA_USERNAME?'':partner.charAt(0).toUpperCase(), partner);
-      showScreen(chatScreen); renderMessages();
-    }
-
-    function renderMessages() {
-      const cu = getCurrentUser(); if (!cu || !chatPartner) return;
-      const msgs = getMsgs(cu.username, chatPartner); chatMessages.innerHTML = '';
-      msgs.forEach(m=>{
-        const d = new Date(m.time), timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-        const row = document.createElement('div'); row.className = `message-row ${m.from===cu.username?'outgoing':'incoming'}`;
-        row.innerHTML = `<div class="message-bubble">${esc(m.text)}<span class="message-time">${timeStr}</span></div>`;
-        chatMessages.appendChild(row);
-      });
-      requestAnimationFrame(()=>{ chatMessages.scrollTop = chatMessages.scrollHeight; });
-    }
-
-    async function sendMsg() {
-      const text = messageInput.value.trim(); if (!text || !chatPartner) return;
-      const cu = getCurrentUser(); if (!cu) return;
-      if (isUserBanned(chatPartner)) { alert('Bu kullanıcı yasaklanmış.'); return; }
-      if (isBlocked(cu.username, chatPartner)) { alert('Engellenmiş kullanıcı.'); return; }
-
-      // Anında ban kontrolü
-      if (!MODERATION_IMMUNE.includes(cu.username) && isInstantBan(text)) {
-        banUser(cu.username);
-        saveCurrentUser({...getCurrentUser(), banned: true});
-        showScreen(bannedScreen);
-        appHeader.classList.remove('visible');
-        return;
-      }
-
-      const msgs = getMsgs(cu.username, chatPartner); msgs.push({ from: cu.username, text, time: Date.now() });
-      saveMsgs(cu.username, chatPartner, msgs); messageInput.value = ''; renderMessages();
-
-      if (chatPartner === LUMINA_USERNAME) {
-        try {
-          const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
-            method:'POST', headers:{'Content-Type':'application/json','X-API-Key':'test-api-key-mira-001'},
-            body: JSON.stringify({ message: text, user: cu.username })
-          });
-          const data = await res.json(); let reply = (data.reply||data.message||'Üzgünüm...').replace(/\*\*/g,'');
-          const up = getMsgs(cu.username, chatPartner); up.push({ from: LUMINA_USERNAME, text: reply, time: Date.now() });
-          saveMsgs(cu.username, chatPartner, up); renderMessages();
-        } catch(e) {
-          const up = getMsgs(cu.username, chatPartner); up.push({ from: LUMINA_USERNAME, text: '⚠️ API hatası.', time: Date.now() });
-          saveMsgs(cu.username, chatPartner, up); renderMessages();
+    const key = [currentUser.username, partner].sort().join('_');
+    db.ref('messages/' + key).on('value', snap => {
+      const msgs = snap.val() || [];
+      chatMessages.innerHTML = '';
+      msgs.forEach(m => {
+        if (typeof m === 'object' && m.from) {
+          const d = new Date(m.time);
+          const t = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+          const me = m.from === currentUser.username;
+          const row = document.createElement('div');
+          row.className = `message-row ${me?'outgoing':'incoming'}`;
+          row.innerHTML = `<div class="message-bubble">${esc(m.text)}<span class="message-time">${t}</span></div>`;
+          chatMessages.appendChild(row);
         }
-      }
-    }
-
-    sendBtn.addEventListener('click', sendMsg);
-    messageInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendMsg(); });
-
-    function esc(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
-    function avatarColor(n) { const c=['#075e54','#128c7e','#25d366','#1ebc56','#0b5e42']; let h=0; for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h); return c[Math.abs(h)%c.length]; }
-
-    function updateCurrentUser(updated) {
-      const users = getUsers(); const idx = users.findIndex(u => u.username === updated.username);
-      if (idx !== -1) { users[idx] = updated; saveUsers(users); saveCurrentUser(updated); }
-    }
-
-    settingsBtn.addEventListener('click',()=>{
-      const cu = getCurrentUser(); if(!cu)return;
-      settingsUsername.textContent=cu.username; settingsPhone.textContent=cu.phone;
-      avatarPreview.innerHTML = cu.avatar ? `<img src="${cu.avatar}">` : cu.username.charAt(0).toUpperCase();
-      tempAvatarData=cu.avatar; darkModeCheckbox.checked=document.body.classList.contains('dark');
-      const blocked = getBlockedList(cu.username);
-      blockedListDiv.innerHTML = blocked.length === 0 ? '<p style="color:var(--text-secondary);">Engellenen kullanıcı yok.</p>' : '';
-      blocked.forEach(user => {
-        const div = document.createElement('div');
-        div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin:5px 0;';
-        div.innerHTML = `<span>${user}</span><button class="unblock-btn" data-user="${user}">Engeli Kaldır</button>`;
-        div.querySelector('.unblock-btn').addEventListener('click', (e) => { e.stopPropagation(); unblockUser(cu.username, user); settingsModal.classList.remove('show'); showContactsScreen(); });
-        blockedListDiv.appendChild(div);
       });
-      settingsModal.classList.add('show');
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     });
-    closeSettingsBtn.addEventListener('click',()=>settingsModal.classList.remove('show'));
-    chooseAvatarBtn.addEventListener('click',()=>avatarFileInput.click());
+  }
 
-    // Profil fotoğrafı otomatik kaydetme
-    avatarFileInput.addEventListener('change',e=>{
-      const f=e.target.files[0]; if(!f)return; const r=new FileReader();
-      r.onload=ev=>{
-        const cu = getCurrentUser();
-        if (cu) {
-          cu.avatar = ev.target.result;
-          updateCurrentUser(cu);
-          avatarPreview.innerHTML = `<img src="${ev.target.result}">`;
-          settingsModal.classList.remove('show');
-          showContactsScreen();
-          if (chatPartner) openChat(chatPartner);
-        }
-      };
-      r.readAsDataURL(f);
-    });
+  sendBtn.addEventListener('click', sendMsg);
+  messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMsg(); });
 
-    removeAvatarBtn.addEventListener('click',()=>{
-      const cu = getCurrentUser();
-      if (cu) {
-        cu.avatar = null;
-        updateCurrentUser(cu);
-        avatarPreview.innerHTML = cu.username.charAt(0).toUpperCase();
-        settingsModal.classList.remove('show');
-        showContactsScreen();
-        if (chatPartner) openChat(chatPartner);
-      }
-    });
+  async function sendMsg() {
+    const text = messageInput.value.trim();
+    if (!text || !chatPartner || !currentUser) return;
+    const msg = { from: currentUser.username, text, time: Date.now() };
 
-    saveSettingsBtn.addEventListener('click',()=>{
-      const cu=getCurrentUser(); if(!cu)return;
-      if (tempAvatarData !== undefined && tempAvatarData !== null) {
-        cu.avatar = tempAvatarData;
-      }
-      updateCurrentUser(cu);
-      settingsModal.classList.remove('show'); showContactsScreen(); if(chatPartner) openChat(chatPartner);
-    });
+    const key = [currentUser.username, chatPartner].sort().join('_');
+    const ref = db.ref('messages/' + key);
+    const snap = await ref.once('value');
+    const msgs = snap.val() || [];
+    msgs.push(msg);
+    await ref.set(msgs);
+    await db.ref('messages/' + key + '/lastTime').set(Date.now());
+    messageInput.value = '';
 
-    (function init() {
-      let users = getUsers();
-      if (!users.find(u=>u.username===VERIFIED_USER)) users.push({ username: VERIFIED_USER, password:'Bacon2024!', phone:'+1 555 000 0001', avatar:null });
-      if (!users.find(u=>u.username===LUMINA_USERNAME)) users.push({ username: LUMINA_USERNAME, password:'', phone:'', avatar: LUMINA_AVATAR_URL });
-      let io = users.find(u=>u.username===IOBROWSER_USER);
-      if (io) { io.phone = ''; io.avatar = IOBROWSER_LOGO; }
-      else { users.push({ username: IOBROWSER_USER, password:'', phone:'', avatar: IOBROWSER_LOGO }); }
-      let wrongIo = users.find(u=>u.username==='loBrowser');
-      if (wrongIo) { wrongIo.username = IOBROWSER_USER; wrongIo.phone = ''; wrongIo.avatar = IOBROWSER_LOGO; }
-      unbanUser('Nenega');
-      saveUsers(users);
-      const cu = getCurrentUser();
-      if (cu) {
-        if (isUserBanned(cu.username)) { showScreen(bannedScreen); appHeader.classList.remove('visible'); }
-        else { setUserOnline(cu.username); setUserOnline(LUMINA_USERNAME); setUserOnline(IOBROWSER_USER); enterApp(); }
-      } else { showScreen(authScreen); appHeader.classList.remove('visible'); }
-    })();
-  </script>
+    if (chatPartner === LUMINA_USERNAME) {
+      try {
+        const res = await fetch('https://chatgpt-production-1b97.up.railway.app/chat', {
+          method:'POST', headers:{'Content-Type':'application/json','X-API-Key':'test-api-key-mira-001'},
+          body: JSON.stringify({ message: text, user: currentUser.username })
+        });
+        const data = await res.json();
+        let reply = (data.reply||data.message||'Üzgünüm...').replace(/\*\*/g,'');
+        msgs.push({ from: LUMINA_USERNAME, text: reply, time: Date.now() });
+        await ref.set(msgs);
+      } catch(e) {}
+    }
+  }
+
+  // Ayarlar
+  document.getElementById('settingsBtn').addEventListener('click', () => {
+    if (!currentUser) return;
+    document.getElementById('settingsUsername').textContent = currentUser.username;
+    document.getElementById('settingsPhone').textContent = currentUser.phone;
+    avatarPreview.innerHTML = currentUser.avatar ? `<img src="${currentUser.avatar}">` : currentUser.username.charAt(0).toUpperCase();
+    tempAvatarData = currentUser.avatar;
+    darkModeCheckbox.checked = document.body.classList.contains('dark');
+    settingsModal.classList.add('show');
+  });
+
+  document.getElementById('closeSettingsBtn').addEventListener('click', () => settingsModal.classList.remove('show'));
+  document.getElementById('chooseAvatarBtn').addEventListener('click', () => document.getElementById('avatarFileInput').click());
+
+  document.getElementById('avatarFileInput').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => { tempAvatarData = ev.target.result; avatarPreview.innerHTML = `<img src="${tempAvatarData}">`; };
+    r.readAsDataURL(f);
+  });
+
+  document.getElementById('removeAvatarBtn').addEventListener('click', () => {
+    tempAvatarData = null; avatarPreview.innerHTML = currentUser.username.charAt(0).toUpperCase();
+  });
+
+  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+    if (!currentUser) return;
+    currentUser.avatar = tempAvatarData;
+    await db.ref('users/' + currentUser.username).update({ avatar: tempAvatarData });
+    userCache = null;
+    settingsModal.classList.remove('show');
+    showContactsScreen();
+  });
+
+  // Karanlık mod
+  function applyDark(on) { document.body.classList.toggle('dark', on); localStorage.setItem('cv_dark', on); }
+  darkModeCheckbox.addEventListener('change', () => applyDark(darkModeCheckbox.checked));
+
+  (async function init() {
+    const savedDark = localStorage.getItem('cv_dark') === 'true';
+    applyDark(savedDark);
+    darkModeCheckbox.checked = savedDark;
+
+    const users = await getUsers(true);
+    if (!users[VERIFIED_USER]) await db.ref('users/' + VERIFIED_USER).set({ username: VERIFIED_USER, password: 'Bacon2024!', phone: '+1 555 000 0001', avatar: null, online: false });
+    if (!users[LUMINA_USERNAME]) await db.ref('users/' + LUMINA_USERNAME).set({ username: LUMINA_USERNAME, password: '', phone: '', avatar: LUMINA_AVATAR_URL, online: true });
+    if (!users[IOBROWSER_USER]) await db.ref('users/' + IOBROWSER_USER).set({ username: IOBROWSER_USER, password: '', phone: '', avatar: IOBROWSER_LOGO, online: true });
+
+    const banned = (await db.ref('bannedUsers').once('value')).val() || {};
+    if (banned['Nenega']) await db.ref('bannedUsers/Nenega').remove();
+
+    showScreen(authScreen);
+  })();
+</script>
 </body>
 </html>
